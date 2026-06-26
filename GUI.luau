@@ -472,42 +472,42 @@ create('UIListLayout',{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.
 new(0,4),SortOrder=Enum.SortOrder.LayoutOrder,VerticalAlignment=Enum.
 VerticalAlignment.Center}),Utils.create('UIPadding',{PaddingLeft=UDim.new(0,16),
 PaddingRight=UDim.new(0,16)})})Utils.create('Frame',{Name='TabBarBorder',
-BackgroundColor3=Theme.Border,Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-
-1),BorderSizePixel=0,Parent=tabBar})local pagesContainer=Utils.create('Frame',{
-Name='Pages',BackgroundTransparency=1,Size=UDim2.new(1,0,1,-80),Position=UDim2.
-new(0,0,0,80),BorderSizePixel=0,ClipsDescendants=true,Parent=canvasGroup})local
-tabs={}local activeTab=nil local tabLayoutOrder=0 local function selectTab(tab)
-for _,t in ipairs(tabs)do t.page.Visible=false t.button.TextColor3=Theme.
-TextSecondary end tab.page.Visible=true tab.button.TextColor3=Theme.Button
-activeTab=tab end local function createTab(name)local tab={}tab.button=Utils.
-create('TextButton',{Name='Tab_'..name,BackgroundTransparency=1,AutomaticSize=
-Enum.AutomaticSize.X,Size=UDim2.new(0,0,0,36),FontFace=Fonts.getInter(),Text=
-name,TextSize=14,TextColor3=Theme.TextSecondary,TextXAlignment=Enum.
-TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,AutoButtonColor=
-false,LayoutOrder=tabLayoutOrder,Parent=tabBar},{Utils.create('UIPadding',{
-PaddingLeft=UDim.new(0,12),PaddingRight=UDim.new(0,12)})})tab.page=Utils.create(
-'ScrollingFrame',{Name='Page_'..name,BackgroundTransparency=1,Size=UDim2.new(1,0
-,1,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=4,ScrollBarImageColor3=
-Theme.Border,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.
-AutomaticSize.Y,BorderSizePixel=0,Visible=false,Parent=pagesContainer},{Utils.
-create('UIListLayout',{Padding=UDim.new(0,12),SortOrder=Enum.SortOrder.
-LayoutOrder}),Utils.create('UIPadding',{PaddingLeft=UDim.new(0,16),PaddingRight=
-UDim.new(0,16),PaddingTop=UDim.new(0,16),PaddingBottom=UDim.new(0,16)})})tab.
-button.MouseEnter:Connect(function()if activeTab~=tab then Utils.tween(tab.
-button,{TextColor3=Theme.TextPrimary},0.15)end end)tab.button.MouseLeave:
-Connect(function()if activeTab~=tab then Utils.tween(tab.button,{TextColor3=
-Theme.TextSecondary},0.15)end end)tab.button.Activated:Connect(function()
-selectTab(tab)end)tab.layoutOrderCounter=0 function tab:AddSection(sectionConfig
-)sectionConfig.LayoutOrder=self.layoutOrderCounter self.layoutOrderCounter+=1
-return Container.new(self.page,sectionConfig)end function tab:AddContainer(
-containerConfig)return self:AddSection(containerConfig)end table.insert(tabs,tab
-)tabLayoutOrder+=1 if#tabs==1 then selectTab(tab)end return tab end local
-dragging=false local dragStart=nil local startPos=nil titleBar.InputBegan:
-Connect(function(input)if input.UserInputType==Enum.UserInputType.MouseButton1
-or input.UserInputType==Enum.UserInputType.Touch then dragging=true dragStart=
-input.Position startPos=canvasGroup.Position end end)local userInput=game:
-GetService('UserInputService')userInput.InputChanged:Connect(function(input)if
-dragging and(input.UserInputType==Enum.UserInputType.MouseMovement or input.
+BackgroundColor3=Theme.Border,Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,0,
+80),BorderSizePixel=0,Parent=canvasGroup})local pagesContainer=Utils.create(
+'Frame',{Name='Pages',BackgroundTransparency=1,Size=UDim2.new(1,0,1,-80),
+Position=UDim2.new(0,0,0,80),BorderSizePixel=0,ClipsDescendants=true,Parent=
+canvasGroup})local tabs={}local activeTab=nil local tabLayoutOrder=0 local 
+function selectTab(tab)for _,t in ipairs(tabs)do t.page.Visible=false t.button.
+TextColor3=Theme.TextSecondary end tab.page.Visible=true tab.button.TextColor3=
+Theme.Button activeTab=tab end local function createTab(name)local tab={}tab.
+button=Utils.create('TextButton',{Name='Tab_'..name,BackgroundTransparency=1,
+AutomaticSize=Enum.AutomaticSize.X,Size=UDim2.new(0,0,0,36),FontFace=Fonts.
+getInter(),Text=name,TextSize=14,TextColor3=Theme.TextSecondary,TextXAlignment=
+Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,
+AutoButtonColor=false,LayoutOrder=tabLayoutOrder,Parent=tabBar},{Utils.create(
+'UIPadding',{PaddingLeft=UDim.new(0,12),PaddingRight=UDim.new(0,12)})})tab.page=
+Utils.create('ScrollingFrame',{Name='Page_'..name,BackgroundTransparency=1,Size=
+UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=4,
+ScrollBarImageColor3=Theme.Border,CanvasSize=UDim2.new(0,0,0,0),
+AutomaticCanvasSize=Enum.AutomaticSize.Y,BorderSizePixel=0,Visible=false,Parent=
+pagesContainer},{Utils.create('UIListLayout',{Padding=UDim.new(0,12),SortOrder=
+Enum.SortOrder.LayoutOrder}),Utils.create('UIPadding',{PaddingLeft=UDim.new(0,16
+),PaddingRight=UDim.new(0,16),PaddingTop=UDim.new(0,16),PaddingBottom=UDim.new(0
+,16)})})tab.button.MouseEnter:Connect(function()if activeTab~=tab then Utils.
+tween(tab.button,{TextColor3=Theme.TextPrimary},0.15)end end)tab.button.
+MouseLeave:Connect(function()if activeTab~=tab then Utils.tween(tab.button,{
+TextColor3=Theme.TextSecondary},0.15)end end)tab.button.Activated:Connect(
+function()selectTab(tab)end)tab.layoutOrderCounter=0 function tab:AddSection(
+sectionConfig)sectionConfig.LayoutOrder=self.layoutOrderCounter self.
+layoutOrderCounter+=1 return Container.new(self.page,sectionConfig)end function
+tab:AddContainer(containerConfig)return self:AddSection(containerConfig)end
+table.insert(tabs,tab)tabLayoutOrder+=1 if#tabs==1 then selectTab(tab)end return
+tab end local dragging=false local dragStart=nil local startPos=nil titleBar.
+InputBegan:Connect(function(input)if input.UserInputType==Enum.UserInputType.
+MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then dragging=true
+dragStart=input.Position startPos=canvasGroup.Position end end)local userInput=
+game:GetService('UserInputService')userInput.InputChanged:Connect(function(input
+)if dragging and(input.UserInputType==Enum.UserInputType.MouseMovement or input.
 UserInputType==Enum.UserInputType.Touch)then local delta=input.Position-
 dragStart canvasGroup.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+
 delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)end end)userInput.InputEnded:
