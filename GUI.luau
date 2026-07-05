@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:26:46
+	Generated at: 2026-07-05 23:30:45
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1021,27 +1021,28 @@ function Dropdown:OpenPopup()
     end
     
     local scale = self.Window.UIScale.Scale
-    local width = self.Frame.AbsoluteSize.X / scale
     
-    -- Screen absolute coordinates
-    local localX = self.Frame.AbsolutePosition.X / scale
-    local localY = self.Frame.AbsolutePosition.Y / scale
+    -- Target width for the popup (160px - narrower as requested)
+    local targetWidth = 160
     
-    -- Width and alignment: Fixed width of 200px, aligned to the right edge of the trigger card
-    local targetWidth = 200
-    local targetX = localX + (width - targetWidth)
+    -- Screen absolute coordinates (unscaled raw positions)
+    local triggerPos = self.Frame.AbsolutePosition
+    local triggerSize = self.Frame.AbsoluteSize
+    
+    -- Align popup's right edge to trigger's right edge
+    local targetX = triggerPos.X + triggerSize.X - (targetWidth * scale)
     
     -- Calculated dimensions (taller Y height)
     local popupHeight = 220
     
     local camera = workspace.CurrentCamera
-    local screenHeight = camera and (camera.ViewportSize.Y / scale) or 1080
+    local screenHeight = camera and camera.ViewportSize.Y or 1080
     
-    local maxBottom = localY + 38 + 4 + popupHeight
+    local maxBottom = triggerPos.Y + triggerSize.Y + 4 + (popupHeight * scale)
     local overflow = maxBottom > screenHeight
-    local targetY = overflow and (localY - popupHeight - 4) or (localY + 38 + 4)
+    local targetY = overflow and (triggerPos.Y - (popupHeight * scale) - 4) or (triggerPos.Y + triggerSize.Y + 4)
     
-    -- Backdrop full screen block parented to the Window ScreenGui directly (allows popping outside window)
+    -- Backdrop full screen block parented directly to the ScreenGui (forces overlay outside MainFrame)
     self.Backdrop = Utility.Create("TextButton", {
         Name = "DropdownBackdrop",
         Parent = self.Window.ScreenGui,
@@ -1053,22 +1054,15 @@ function Dropdown:OpenPopup()
         Active = true
     })
     
-    -- Reapply window's UIScale to the backdrop so the popup scales identically
-    Utility.Create("UIScale", {
-        Name = "UIScale",
-        Parent = self.Backdrop,
-        Scale = scale
-    })
-    
     self.Backdrop.MouseButton1Click:Connect(function()
         self:ClosePopup()
     end)
     
-    -- Popup Panel
+    -- Popup Panel (Parented to Backdrop, positioning uses unscaled screen coordinates)
     self.Popup = Utility.Create("Frame", {
         Name = "DropdownPopup",
         Parent = self.Backdrop,
-        Size = UDim2.new(0, targetWidth, 0, 0), -- Start at height 0 for opening zoom
+        Size = UDim2.new(0, targetWidth, 0, 0), -- Starts at height 0 for opening zoom
         Position = UDim2.new(0, targetX, 0, targetY),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
@@ -1080,6 +1074,11 @@ function Dropdown:OpenPopup()
             Color = Theme.Border,
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        }),
+        -- Reapply window's UIScale directly to the popup so its size scales identically
+        Utility.Create("UIScale", {
+            Name = "UIScale",
+            Scale = scale
         })
     })
     
@@ -1251,7 +1250,7 @@ end
 function Dropdown:ClosePopup()
     if not self.Backdrop then return end
     
-    local targetWidth = 200
+    local targetWidth = 160
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
