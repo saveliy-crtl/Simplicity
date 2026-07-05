@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:32:57
+	Generated at: 2026-07-06 00:40:06
 	Simple, Beautiful, Proper
 ]=]
 
@@ -500,7 +500,6 @@ function Colorpicker.new(text, parent, options, callback, window)
     self.Callback = callback or function() end
     self.Window = window
     
-    self.Opened = false
     self.Value = self.Default
     
     -- Deconstruct initial Color3 to HSV
@@ -513,13 +512,12 @@ function Colorpicker.new(text, parent, options, callback, window)
     self.DraggingSat = false
     self.DraggingVal = false
     
-    -- Main Container Frame
+    -- Main Container Frame (Constant Height)
     self.Frame = Utility.Create("Frame", {
         Name = "Colorpicker_" .. self.Text,
         Parent = parent,
         Size = UDim2.new(1, 0, 0, 38),
         BackgroundColor3 = Theme.Card,
-        ClipsDescendants = true,
         BorderSizePixel = 0
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
@@ -528,263 +526,57 @@ function Colorpicker.new(text, parent, options, callback, window)
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         }),
-        -- Trigger / Preview Header
-        Utility.Create("Frame", {
-            Name = "Header",
-            Size = UDim2.new(1, 0, 0, 38),
-            BackgroundTransparency = 1
-        }, {
-            -- Label
-            Utility.Create("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -70, 1, 0),
-                Position = UDim2.new(0, 15, 0, 0),
-                BackgroundTransparency = 1,
-                Text = self.Text,
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 14,
-                Font = Theme.FontMedium,
-                TextXAlignment = Enum.TextXAlignment.Left
-            }),
-            -- Color Preview Box Button
-            Utility.Create("TextButton", {
-                Name = "Preview",
-                Size = UDim2.new(0, 36, 0, 20),
-                Position = UDim2.new(1, -51, 0.5, -10),
-                BackgroundColor3 = self.Default,
-                Text = "",
-                AutoButtonColor = false
-            }, {
-                Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
-                Utility.Create("UIStroke", {
-                    Color = Theme.Border,
-                    Thickness = 1
-                })
-            })
-        }),
-        
-        -- Expanded Pane Container
-        Utility.Create("Frame", {
-            Name = "Pane",
-            Size = UDim2.new(1, 0, 0, 110),
-            Position = UDim2.new(0, 0, 0, 38),
+        -- Label
+        Utility.Create("TextLabel", {
+            Name = "Label",
+            Size = UDim2.new(1, -70, 1, 0),
+            Position = UDim2.new(0, 15, 0, 0),
             BackgroundTransparency = 1,
-            Visible = false
+            Text = self.Text,
+            TextColor3 = Theme.TextSecondary,
+            TextSize = 13,
+            Font = Theme.FontMedium,
+            TextXAlignment = Enum.TextXAlignment.Left
+        }),
+        -- Color Preview Box Button
+        Utility.Create("TextButton", {
+            Name = "Preview",
+            Size = UDim2.new(0, 36, 0, 20),
+            Position = UDim2.new(1, -51, 0.5, -10),
+            BackgroundColor3 = self.Default,
+            Text = "",
+            AutoButtonColor = false
         }, {
-            -- HUE ROW
-            Utility.Create("TextLabel", {
-                Name = "HueLabel",
-                Size = UDim2.new(0, 80, 0, 20),
-                Position = UDim2.new(0, 15, 0, 10),
-                BackgroundTransparency = 1,
-                Text = "Hue",
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 12,
-                Font = Theme.FontMedium,
-                TextXAlignment = Enum.TextXAlignment.Left
-            }),
-            Utility.Create("Frame", {
-                Name = "HueTrack",
-                Size = UDim2.new(1, -110, 0, 8),
-                Position = UDim2.new(0, 95, 0, 16),
-                BorderSizePixel = 0
-            }, {
-                Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                Utility.Create("UIGradient", {
-                    Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
-                        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-                        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-                        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-                        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-                        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-                        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 0))
-                    })
-                }),
-                Utility.Create("Frame", {
-                    Name = "Knob",
-                    Size = UDim2.new(0, 14, 0, 14),
-                    Position = UDim2.new(self.H, -7, 0.5, -7),
-                    BackgroundColor3 = Theme.TextPrimary,
-                    BorderSizePixel = 0
-                }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                    Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
-                })
-            }),
-            
-            -- SATURATION ROW
-            Utility.Create("TextLabel", {
-                Name = "SatLabel",
-                Size = UDim2.new(0, 80, 0, 20),
-                Position = UDim2.new(0, 15, 0, 42),
-                BackgroundTransparency = 1,
-                Text = "Saturation",
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 12,
-                Font = Theme.FontMedium,
-                TextXAlignment = Enum.TextXAlignment.Left
-            }),
-            Utility.Create("Frame", {
-                Name = "SatTrack",
-                Size = UDim2.new(1, -110, 0, 8),
-                Position = UDim2.new(0, 95, 0, 48),
-                BorderSizePixel = 0
-            }, {
-                Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                Utility.Create("UIGradient", {
-                    Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(self.H, 1, 1))
-                }),
-                Utility.Create("Frame", {
-                    Name = "Knob",
-                    Size = UDim2.new(0, 14, 0, 14),
-                    Position = UDim2.new(self.S, -7, 0.5, -7),
-                    BackgroundColor3 = Theme.TextPrimary,
-                    BorderSizePixel = 0
-                }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                    Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
-                })
-            }),
-            
-            -- VALUE (BRIGHTNESS) ROW
-            Utility.Create("TextLabel", {
-                Name = "ValLabel",
-                Size = UDim2.new(0, 80, 0, 20),
-                Position = UDim2.new(0, 15, 0, 74),
-                BackgroundTransparency = 1,
-                Text = "Brightness",
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 12,
-                Font = Theme.FontMedium,
-                TextXAlignment = Enum.TextXAlignment.Left
-            }),
-            Utility.Create("Frame", {
-                Name = "ValTrack",
-                Size = UDim2.new(1, -110, 0, 8),
-                Position = UDim2.new(0, 95, 0, 80),
-                BorderSizePixel = 0
-            }, {
-                Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                Utility.Create("UIGradient", {
-                    Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(self.H, self.S, 1))
-                }),
-                Utility.Create("Frame", {
-                    Name = "Knob",
-                    Size = UDim2.new(0, 14, 0, 14),
-                    Position = UDim2.new(self.V, -7, 0.5, -7),
-                    BackgroundColor3 = Theme.TextPrimary,
-                    BorderSizePixel = 0
-                }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                    Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
-                })
+            Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+            Utility.Create("UIStroke", {
+                Color = Theme.Border,
+                Thickness = 1
             })
         })
     })
     
-    self.HeaderFrame = self.Frame:FindFirstChild("Header")
-    self.Label = self.HeaderFrame:FindFirstChild("Label")
-    self.PreviewBtn = self.HeaderFrame:FindFirstChild("Preview")
+    self.Label = self.Frame:FindFirstChild("Label")
+    self.PreviewBtn = self.Frame:FindFirstChild("Preview")
     self.PreviewStroke = self.PreviewBtn:FindFirstChildOfClass("UIStroke")
     self.Stroke = self.Frame:FindFirstChildOfClass("UIStroke")
     
-    self.Pane = self.Frame:FindFirstChild("Pane")
-    self.HueTrack = self.Pane:FindFirstChild("HueTrack")
-    self.HueKnob = self.HueTrack:FindFirstChild("Knob")
-    
-    self.SatTrack = self.Pane:FindFirstChild("SatTrack")
-    self.SatGradient = self.SatTrack:FindFirstChildOfClass("UIGradient")
-    self.SatKnob = self.SatTrack:FindFirstChild("Knob")
-    
-    self.ValTrack = self.Pane:FindFirstChild("ValTrack")
-    self.ValGradient = self.ValTrack:FindFirstChildOfClass("UIGradient")
-    self.ValKnob = self.ValTrack:FindFirstChild("Knob")
-    
-    -- Click to Open Colorpicker Panel
-    self.PreviewBtn.MouseButton1Click:Connect(function()
-        self:Toggle()
-    end)
-    
-    -- Hover effect
-    self.HeaderFrame.MouseEnter:Connect(function()
+    -- Hover effect on Card
+    self.Frame.MouseEnter:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
+        Utility.Tween(self.Label, { TextColor3 = Theme.TextPrimary }, 0.15)
     end)
     
-    self.HeaderFrame.MouseLeave:Connect(function()
+    self.Frame.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
+        Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
+    end)
+    
+    -- Click to Open Colorpicker Dialogue Panel
+    self.PreviewBtn.MouseButton1Click:Connect(function()
+        self:OpenDialogue()
     end)
     
     Utility.AddClickEffect(self.PreviewBtn)
-    
-    -- Sliders Dragging logic
-    local function updateHue(input)
-        local relativeX = math.clamp(input.Position.X - self.HueTrack.AbsolutePosition.X, 0, self.HueTrack.AbsoluteSize.X)
-        local percentage = relativeX / self.HueTrack.AbsoluteSize.X
-        self.H = percentage
-        self.HueKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
-        self:UpdateHSV()
-    end
-    
-    local function updateSat(input)
-        local relativeX = math.clamp(input.Position.X - self.SatTrack.AbsolutePosition.X, 0, self.SatTrack.AbsoluteSize.X)
-        local percentage = relativeX / self.SatTrack.AbsoluteSize.X
-        self.S = percentage
-        self.SatKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
-        self:UpdateHSV()
-    end
-    
-    local function updateVal(input)
-        local relativeX = math.clamp(input.Position.X - self.ValTrack.AbsolutePosition.X, 0, self.ValTrack.AbsoluteSize.X)
-        local percentage = relativeX / self.ValTrack.AbsoluteSize.X
-        self.V = percentage
-        self.ValKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
-        self:UpdateHSV()
-    end
-    
-    -- Hue Inputs
-    self.HueTrack.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            self.DraggingHue = true
-            updateHue(input)
-        end
-    end)
-    -- Sat Inputs
-    self.SatTrack.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            self.DraggingSat = true
-            updateSat(input)
-        end
-    end)
-    -- Val Inputs
-    self.ValTrack.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            self.DraggingVal = true
-            updateVal(input)
-        end
-    end)
-    
-    -- Global Input Changed
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            if self.DraggingHue then
-                updateHue(input)
-            elseif self.DraggingSat then
-                updateSat(input)
-            elseif self.DraggingVal then
-                updateVal(input)
-            end
-        end
-    end)
-    
-    -- Global Input Ended
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            self.DraggingHue = false
-            self.DraggingSat = false
-            self.DraggingVal = false
-        end
-    end)
     
     -- Register Flag (Store as RGB array to allow JSON serialization)
     if self.Flag and self.Window then
@@ -801,36 +593,267 @@ function Colorpicker.new(text, parent, options, callback, window)
     return self
 end
 
-function Colorpicker:Toggle()
-    self.Opened = not self.Opened
+function Colorpicker:OpenDialogue()
+    local Dialogue = require("components/Dialogue")
+    local dialogue = Dialogue.new(self.Text, self.Window, UDim2.new(0, 240, 0, 160))
     
-    local targetFrameHeight = self.Opened and 148 or 38
+    -- Dialogue Hue Track
+    local hueLabel = Utility.Create("TextLabel", {
+        Name = "HueLabel",
+        Parent = dialogue.Content,
+        Size = UDim2.new(0, 80, 0, 20),
+        Position = UDim2.new(0, 15, 0, 15),
+        BackgroundTransparency = 1,
+        Text = "Hue",
+        TextColor3 = Theme.TextSecondary,
+        TextSize = 12,
+        Font = Theme.FontMedium,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
     
-    if self.Opened then
-        self.Pane.Visible = true
+    local hueTrack = Utility.Create("Frame", {
+        Name = "HueTrack",
+        Parent = dialogue.Content,
+        Size = UDim2.new(1, -110, 0, 8),
+        Position = UDim2.new(0, 95, 0, 21),
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0.0, Color3.fromRGB(255, 0, 0)),
+                ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+                ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+                ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+                ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 0, 0))
+            })
+        })
+    })
+    
+    local hueKnob = Utility.Create("Frame", {
+        Name = "Knob",
+        Parent = hueTrack,
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(self.H, -7, 0.5, -7),
+        BackgroundColor3 = Theme.TextPrimary,
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
+    })
+    
+    -- Saturation Slider Track
+    local satLabel = Utility.Create("TextLabel", {
+        Name = "SatLabel",
+        Parent = dialogue.Content,
+        Size = UDim2.new(0, 80, 0, 20),
+        Position = UDim2.new(0, 15, 0, 50),
+        BackgroundTransparency = 1,
+        Text = "Saturation",
+        TextColor3 = Theme.TextSecondary,
+        TextSize = 12,
+        Font = Theme.FontMedium,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local satTrack = Utility.Create("Frame", {
+        Name = "SatTrack",
+        Parent = dialogue.Content,
+        Size = UDim2.new(1, -110, 0, 8),
+        Position = UDim2.new(0, 95, 0, 56),
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIGradient", {
+            Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(self.H, 1, 1))
+        })
+    })
+    
+    local satGradient = satTrack:FindFirstChildOfClass("UIGradient")
+    
+    local satKnob = Utility.Create("Frame", {
+        Name = "Knob",
+        Parent = satTrack,
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(self.S, -7, 0.5, -7),
+        BackgroundColor3 = Theme.TextPrimary,
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
+    })
+    
+    -- Brightness Slider Track
+    local valLabel = Utility.Create("TextLabel", {
+        Name = "ValLabel",
+        Parent = dialogue.Content,
+        Size = UDim2.new(0, 80, 0, 20),
+        Position = UDim2.new(0, 15, 0, 85),
+        BackgroundTransparency = 1,
+        Text = "Brightness",
+        TextColor3 = Theme.TextSecondary,
+        TextSize = 12,
+        Font = Theme.FontMedium,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local valTrack = Utility.Create("Frame", {
+        Name = "ValTrack",
+        Parent = dialogue.Content,
+        Size = UDim2.new(1, -110, 0, 8),
+        Position = UDim2.new(0, 95, 0, 91),
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIGradient", {
+            Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(self.H, self.S, 1))
+        })
+    })
+    
+    local valGradient = valTrack:FindFirstChildOfClass("UIGradient")
+    
+    local valKnob = Utility.Create("Frame", {
+        Name = "Knob",
+        Parent = valTrack,
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(self.V, -7, 0.5, -7),
+        BackgroundColor3 = Theme.TextPrimary,
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
+    })
+    
+    -- Color Preview Bar
+    local previewBar = Utility.Create("Frame", {
+        Name = "PreviewBar",
+        Parent = dialogue.Content,
+        Size = UDim2.new(1, -30, 0, 8),
+        Position = UDim2.new(0, 15, 0, 122),
+        BackgroundColor3 = self.Value,
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+        Utility.Create("UIStroke", { Color = Theme.Border, Thickness = 1 })
+    })
+    
+    -- Register local controls to the object
+    self.DialogueHueTrack = hueTrack
+    self.DialogueHueKnob = hueKnob
+    self.DialogueSatTrack = satTrack
+    self.DialogueSatGradient = satGradient
+    self.DialogueSatKnob = satKnob
+    self.DialogueValTrack = valTrack
+    self.DialogueValGradient = valGradient
+    self.DialogueValKnob = valKnob
+    self.DialoguePreviewBar = previewBar
+    
+    -- Real-time dragging calculations
+    local function updateHue(input)
+        local relativeX = math.clamp(input.Position.X - hueTrack.AbsolutePosition.X, 0, hueTrack.AbsoluteSize.X)
+        local percentage = relativeX / hueTrack.AbsoluteSize.X
+        self.H = percentage
+        hueKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
+        self:UpdateHSV()
     end
     
-    local frameTween = Utility.Tween(self.Frame, { Size = UDim2.new(1, 0, 0, targetFrameHeight) }, 0.15)
+    local function updateSat(input)
+        local relativeX = math.clamp(input.Position.X - satTrack.AbsolutePosition.X, 0, satTrack.AbsoluteSize.X)
+        local percentage = relativeX / satTrack.AbsoluteSize.X
+        self.S = percentage
+        satKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
+        self:UpdateHSV()
+    end
     
-    if not self.Opened then
-        frameTween.Completed:Connect(function()
-            if not self.Opened then
-                self.Pane.Visible = false
+    local function updateVal(input)
+        local relativeX = math.clamp(input.Position.X - valTrack.AbsolutePosition.X, 0, valTrack.AbsoluteSize.X)
+        local percentage = relativeX / valTrack.AbsoluteSize.X
+        self.V = percentage
+        valKnob.Position = UDim2.new(percentage, -7, 0.5, -7)
+        self:UpdateHSV()
+    end
+    
+    -- Mouse Input Events
+    local connBeganHue = hueTrack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.DraggingHue = true
+            updateHue(input)
+        end
+    end)
+    
+    local connBeganSat = satTrack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.DraggingSat = true
+            updateSat(input)
+        end
+    end)
+    
+    local connBeganVal = valTrack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.DraggingVal = true
+            updateVal(input)
+        end
+    end)
+    
+    local connChanged = UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            if self.DraggingHue then
+                updateHue(input)
+            elseif self.DraggingSat then
+                updateSat(input)
+            elseif self.DraggingVal then
+                updateVal(input)
             end
-        end)
-    end
+        end
+    end)
+    
+    local connEnded = UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.DraggingHue = false
+            self.DraggingSat = false
+            self.DraggingVal = false
+        end
+    end)
+    
+    -- Cleanup on close
+    dialogue.Backdrop.Destroying:Connect(function()
+        connBeganHue:Disconnect()
+        connBeganSat:Disconnect()
+        connBeganVal:Disconnect()
+        connChanged:Disconnect()
+        connEnded:Disconnect()
+        
+        self.DialogueHueTrack = nil
+        self.DialogueHueKnob = nil
+        self.DialogueSatTrack = nil
+        self.DialogueSatGradient = nil
+        self.DialogueSatKnob = nil
+        self.DialogueValTrack = nil
+        self.DialogueValGradient = nil
+        self.DialogueValKnob = nil
+        self.DialoguePreviewBar = nil
+    end)
 end
 
 function Colorpicker:UpdateHSV()
     local color = Color3.fromHSV(self.H, self.S, self.V)
     self.Value = color
     
-    -- Update Preview Box Color
+    -- Update Preview Box Color on Card
     self.PreviewBtn.BackgroundColor3 = color
     
-    -- Update intermediate gradients
-    self.SatGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(self.H, 1, 1))
-    self.ValGradient.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(self.H, self.S, 1))
+    -- Update active dialogue controls if open
+    if self.DialogueSatGradient then
+        self.DialogueSatGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(self.H, 1, 1))
+    end
+    if self.DialogueValGradient then
+        self.DialogueValGradient.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(self.H, self.S, 1))
+    end
+    if self.DialoguePreviewBar then
+        self.DialoguePreviewBar.BackgroundColor3 = color
+    end
     
     -- Update Flags array
     if self.Flag and self.Window and self.Window.Flags then
@@ -847,7 +870,6 @@ function Colorpicker:UpdateHSV()
 end
 
 function Colorpicker:Set(color, force)
-    -- Handle loading RGB arrays from configurations
     if type(color) == "table" then
         color = Color3.new(color[1] or 1, color[2] or 1, color[3] or 1)
     end
@@ -856,28 +878,37 @@ function Colorpicker:Set(color, force)
     
     self.Value = color
     
-    -- Re-evaluate HSV values
     local h, s, v = Color3.toHSV(color)
     self.H = h
     self.S = s
     self.V = v
     
-    -- Position Knobs
-    self.HueKnob.Position = UDim2.new(h, -7, 0.5, -7)
-    self.SatKnob.Position = UDim2.new(s, -7, 0.5, -7)
-    self.ValKnob.Position = UDim2.new(v, -7, 0.5, -7)
-    
-    -- Render colors
     self.PreviewBtn.BackgroundColor3 = color
-    self.SatGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(h, 1, 1))
-    self.ValGradient.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(h, s, 1))
     
-    -- Update Flags
+    -- If dialogue is open, update knobs & gradients
+    if self.DialogueHueKnob then
+        self.DialogueHueKnob.Position = UDim2.new(h, -7, 0.5, -7)
+    end
+    if self.DialogueSatKnob then
+        self.DialogueSatKnob.Position = UDim2.new(s, -7, 0.5, -7)
+    end
+    if self.DialogueValKnob then
+        self.DialogueValKnob.Position = UDim2.new(v, -7, 0.5, -7)
+    end
+    if self.DialogueSatGradient then
+        self.DialogueSatGradient.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromHSV(h, 1, 1))
+    end
+    if self.DialogueValGradient then
+        self.DialogueValGradient.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromHSV(h, s, 1))
+    end
+    if self.DialoguePreviewBar then
+        self.DialoguePreviewBar.BackgroundColor3 = color
+    end
+    
     if self.Flag and self.Window and self.Window.Flags then
         self.Window.Flags[self.Flag] = {color.R, color.G, color.B}
     end
     
-    -- Fire Callback
     task.spawn(function()
         local success, err = pcall(self.Callback, color)
         if not success then
@@ -887,6 +918,158 @@ function Colorpicker:Set(color, force)
 end
 
 return Colorpicker
+end
+
+-- MODULE: components/Dialogue
+modules["components/Dialogue"] = function()local Theme = require("theme")
+local Utility = require("utility")
+local Lucide = require("packages/lucide-roblox")
+
+local Dialogue = {}
+Dialogue.__index = Dialogue
+
+function Dialogue.new(title, window, size)
+    local self = setmetatable({}, Dialogue)
+    
+    self.Window = window
+    self.Size = size or UDim2.new(0, 240, 0, 200)
+    self.Title = title or "Dialogue"
+    
+    local scale = self.Window.UIScale.Scale
+    
+    -- Absolute Screen center of the Window
+    local containerPos = self.Window.Container.AbsolutePosition
+    local containerSize = self.Window.Container.AbsoluteSize
+    local centerX = containerPos.X + (containerSize.X / 2)
+    local centerY = containerPos.Y + (containerSize.Y / 2)
+    
+    -- Full Screen Blackout Backdrop parented to self.Window.ScreenGui
+    self.Backdrop = Utility.Create("TextButton", {
+        Name = "DialogueBackdrop",
+        Parent = self.Window.ScreenGui,
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 1, -- Start transparent for fade-in
+        Text = "",
+        ZIndex = 200,
+        Active = true
+    })
+    
+    self.Backdrop.MouseButton1Click:Connect(function()
+        self:Close()
+    end)
+    
+    -- Dialogue Body (Centered in the window, parented to the Backdrop)
+    self.Frame = Utility.Create("Frame", {
+        Name = "DialogueFrame",
+        Parent = self.Backdrop,
+        Size = self.Size,
+        Position = UDim2.new(0, centerX, 0, centerY),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Theme.Header,
+        BorderSizePixel = 0,
+        ZIndex = 201,
+        ClipsDescendants = true
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+        Utility.Create("UIStroke", {
+            Color = Theme.Border,
+            Thickness = 1,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        }),
+        -- Reapply window's UIScale directly to the dialogue frame so its size scales identically
+        Utility.Create("UIScale", {
+            Name = "UIScale",
+            Scale = scale
+        }),
+        -- Header Bar
+        Utility.Create("Frame", {
+            Name = "Header",
+            Size = UDim2.new(1, 0, 0, 32),
+            BackgroundColor3 = Theme.Background,
+            BorderSizePixel = 0
+        }, {
+            Utility.Create("TextLabel", {
+                Name = "Title",
+                Size = UDim2.new(1, -40, 1, 0),
+                Position = UDim2.new(0, 12, 0, 0),
+                BackgroundTransparency = 1,
+                Text = self.Title,
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 13,
+                Font = Theme.FontSemibold,
+                TextXAlignment = Enum.TextXAlignment.Left
+            }),
+            -- Close Button
+            Utility.Create("TextButton", {
+                Name = "Close",
+                Size = UDim2.new(0, 24, 0, 24),
+                Position = UDim2.new(1, -28, 0.5, -12),
+                BackgroundTransparency = 1,
+                Text = ""
+            }, {
+                Utility.Create("ImageLabel", {
+                    Name = "Icon",
+                    Size = UDim2.new(0, 12, 0, 12),
+                    Position = UDim2.new(0.5, -6, 0.5, -6),
+                    BackgroundTransparency = 1,
+                    Image = Lucide.GetAsset("x", 48).Url,
+                    ImageRectSize = Lucide.GetAsset("x", 48).ImageRectSize,
+                    ImageRectOffset = Lucide.GetAsset("x", 48).ImageRectOffset,
+                    ImageColor3 = Theme.TextSecondary
+                })
+            })
+        }),
+        -- Content Area
+        Utility.Create("Frame", {
+            Name = "Content",
+            Size = UDim2.new(1, 0, 1, -32),
+            Position = UDim2.new(0, 0, 0, 32),
+            BackgroundTransparency = 1
+        })
+    })
+    
+    self.Header = self.Frame:FindFirstChild("Header")
+    self.Content = self.Frame:FindFirstChild("Content")
+    self.CloseBtn = self.Header:FindFirstChild("Close")
+    
+    -- Close button logic
+    self.CloseBtn.MouseButton1Click:Connect(function()
+        self:Close()
+    end)
+    
+    -- Hover effect on Close
+    local closeIcon = self.CloseBtn:FindFirstChild("Icon")
+    self.CloseBtn.MouseEnter:Connect(function()
+        Utility.Tween(closeIcon, { ImageColor3 = Theme.Failure }, 0.15)
+    end)
+    self.CloseBtn.MouseLeave:Connect(function()
+        Utility.Tween(closeIcon, { ImageColor3 = Theme.TextSecondary }, 0.15)
+    end)
+    
+    -- Non-draggable as requested
+    
+    -- Opening Animations (Fade dim & Zoom pop)
+    Utility.Tween(self.Backdrop, { BackgroundTransparency = 0.65 }, 0.2)
+    
+    -- Pop zoom effect starting from center
+    self.Frame.Size = UDim2.new(0, 0, 0, 0)
+    Utility.Tween(self.Frame, { Size = self.Size }, 0.2, Enum.EasingStyle.Back)
+    
+    return self
+end
+
+function Dialogue:Close()
+    local closeTween = Utility.Tween(self.Frame, { Size = UDim2.new(0, 0, 0, 0) }, 0.15)
+    Utility.Tween(self.Backdrop, { BackgroundTransparency = 1 }, 0.15)
+    
+    closeTween.Completed:Connect(function()
+        self.Backdrop:Destroy()
+    end)
+end
+
+return Dialogue
 end
 
 -- MODULE: components/Dropdown
