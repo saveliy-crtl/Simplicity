@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:57:05
+	Generated at: 2026-07-05 23:03:10
 	Simple, Beautiful, Proper
 ]=]
 
@@ -321,20 +321,20 @@ function Utility.AddClickEffect(button)
             ripple.Name = "Ripple"
             ripple.AnchorPoint = Vector2.new(0.5, 0.5)
             ripple.Position = UDim2.new(0, localX, 0, localY)
-            ripple.Size = UDim2.new(0, 0, 0, 0)
+            ripple.Size = UDim2.new(0, 2, 0, 2)
             ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            ripple.BackgroundTransparency = 0.75
+            ripple.BackgroundTransparency = 0.92 -- Highly transparent/subtle
             ripple.BorderSizePixel = 0
             ripple.ZIndex = 10
             
             local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(1, 0)
+            corner.CornerRadius = UDim.new(1, 0) -- Pure circle
             corner.Parent = ripple
             
             ripple.Parent = button
             
-            -- Target size (double the largest size of the button to cover fully)
-            local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2.0
+            -- Target size (1.5x the largest size of the button to cover fully)
+            local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 1.5
             
             -- Tween expand and fade (using TweenService directly with 0.7s duration to be slower and highly visible)
             local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
