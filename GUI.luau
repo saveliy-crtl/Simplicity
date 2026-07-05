@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:03:10
+	Generated at: 2026-07-05 23:05:54
 	Simple, Beautiful, Proper
 ]=]
 
@@ -2119,6 +2119,7 @@ modules["components/Window"] = function()local Theme = require("theme")
 local Utility = require("utility")
 local Lucide = require("packages/lucide-roblox")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local Window = {}
 Window.__index = Window
@@ -2142,18 +2143,10 @@ function Window.new(title, configFolder)
         ResetOnSpawn = false
     })
     
-    -- Responsive Container Frame
-    self.Container = Utility.Create("Frame", {
-        Name = "Container",
-        Parent = self.ScreenGui,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1
-    })
-    
     -- Main Frame
     self.MainFrame = Utility.Create("Frame", {
         Name = "MainFrame",
-        Parent = self.Container,
+        Parent = self.ScreenGui,
         Size = UDim2.new(0, 580, 0, 380),
         Position = UDim2.new(0.5, -290, 0.5, -190),
         BackgroundColor3 = Theme.Background,
@@ -2168,19 +2161,26 @@ function Window.new(title, configFolder)
         })
     })
 
-    -- Responsive UIScale Setup for Mobile / PC
-    local uiScale = Utility.Create("UIScale", {
+    -- Single UIScale Setup
+    self.UIScale = Utility.Create("UIScale", {
         Name = "UIScale",
-        Parent = self.Container,
-        Scale = 1
-    })
-    
-    -- Appear Scale UIScale for Launch/Toggle Animations
-    local appearScale = Utility.Create("UIScale", {
-        Name = "AppearScale",
         Parent = self.MainFrame,
         Scale = 0.85
     })
+    
+    -- Value holder for animating the appear scale cleanly
+    self.AppearScaleValue = Instance.new("NumberValue")
+    self.AppearScaleValue.Name = "AppearScaleValue"
+    self.AppearScaleValue.Value = 0.85
+    self.AppearScaleValue.Parent = self.MainFrame
+    
+    self.ResponsiveScale = 1
+    
+    local function updateActualScale()
+        self.UIScale.Scale = self.ResponsiveScale * self.AppearScaleValue.Value
+    end
+    
+    self.AppearScaleValue.Changed:Connect(updateActualScale)
 
     local function updateScale()
         local camera = workspace.CurrentCamera
@@ -2198,7 +2198,8 @@ function Window.new(title, configFolder)
             -- Clamp scale so it doesn't get ridiculously small (min 0.65)
             scale = math.clamp(scale, 0.65, 1)
         end
-        uiScale.Scale = scale
+        self.ResponsiveScale = scale
+        updateActualScale()
     end
 
     updateScale()
@@ -2417,7 +2418,7 @@ function Window.new(title, configFolder)
     -- Animate Launch (Appear Scale)
     task.spawn(function()
         task.wait(0.02)
-        Utility.Tween(appearScale, { Scale = 1.0 })
+        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
     end)
 
     return self
@@ -2451,14 +2452,9 @@ end
 function Window:ToggleVisibility()
     if self.Closed then return end
     
-    local appearScale = self.MainFrame:FindFirstChild("AppearScale")
-    if not appearScale then
-        self.MainFrame.Visible = not self.MainFrame.Visible
-        return
-    end
-    
     if self.MainFrame.Visible then
-        local tween = Utility.Tween(appearScale, { Scale = 0.85 })
+        local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 0.85 })
+        tween:Play()
         self.ToggleConnection = tween.Completed:Connect(function()
             self.MainFrame.Visible = false
             if self.ToggleConnection then
@@ -2471,9 +2467,9 @@ function Window:ToggleVisibility()
             self.ToggleConnection:Disconnect()
             self.ToggleConnection = nil
         end
-        appearScale.Scale = 0.85
+        self.AppearScaleValue.Value = 0.85
         self.MainFrame.Visible = true
-        Utility.Tween(appearScale, { Scale = 1.0 })
+        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
     end
 end
 
@@ -2488,13 +2484,9 @@ function Window:Close()
         self.ViewportConnection:Disconnect()
     end
     
-    local appearScale = self.MainFrame:FindFirstChild("AppearScale")
-    if appearScale then
-        local tween = Utility.Tween(appearScale, { Scale = 0.85 })
-        tween.Completed:Wait()
-    else
-        task.wait(0.15)
-    end
+    local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 0.85 })
+    tween:Play()
+    tween.Completed:Wait()
     
     self.ScreenGui:Destroy()
 end
