@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:12:02
+	Generated at: 2026-07-05 23:13:39
 	Simple, Beautiful, Proper
 ]=]
 
@@ -2461,7 +2461,26 @@ end
 
 function Window:ToggleVisibility()
     if self.Closed then return end
-    self.MainFrame.Visible = not self.MainFrame.Visible
+    
+    if self.MainFrame.Visible then
+        local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.94 })
+        tween:Play()
+        self.ToggleConnection = tween.Completed:Connect(function()
+            self.MainFrame.Visible = false
+            if self.ToggleConnection then
+                self.ToggleConnection:Disconnect()
+                self.ToggleConnection = nil
+            end
+        end)
+    else
+        if self.ToggleConnection then
+            self.ToggleConnection:Disconnect()
+            self.ToggleConnection = nil
+        end
+        self.AppearScaleValue.Value = 0.94
+        self.MainFrame.Visible = true
+        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
+    end
 end
 
 function Window:Close()
@@ -2474,6 +2493,10 @@ function Window:Close()
     if self.ViewportConnection then
         self.ViewportConnection:Disconnect()
     end
+    
+    local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.94 })
+    tween:Play()
+    tween.Completed:Wait()
     
     self.ScreenGui:Destroy()
 end
