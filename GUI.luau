@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:17:40
+	Generated at: 2026-07-05 23:20:14
 	Simple, Beautiful, Proper
 ]=]
 
@@ -893,6 +893,7 @@ end
 modules["components/Dropdown"] = function()local Theme = require("theme")
 local Utility = require("utility")
 local Lucide = require("packages/lucide-roblox")
+local TweenService = game:GetService("TweenService")
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
@@ -907,21 +908,22 @@ function Dropdown.new(text, parent, options, callback, window)
     self.Flag = options.flag or options.Flag
     self.Callback = callback or function() end
     self.Window = window
-    self.Opened = false
+    
     self.Value = self.Default or (self.List[1] or "")
+    self.Backdrop = nil
+    self.Popup = nil
     
     local chevron = Lucide.GetAsset("chevron-down", 48)
     
-    -- Main Container Frame
+    -- Main Trigger Frame
     self.Frame = Utility.Create("Frame", {
         Name = "Dropdown_" .. self.Text,
         Parent = parent,
         Size = UDim2.new(1, 0, 0, 38),
         BackgroundColor3 = Theme.Card,
-        ClipsDescendants = true,
         BorderSizePixel = 0
     }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
         Utility.Create("UIStroke", {
             Color = Theme.Border,
             Thickness = 1,
@@ -930,7 +932,7 @@ function Dropdown.new(text, parent, options, callback, window)
         -- Trigger Button
         Utility.Create("TextButton", {
             Name = "Trigger",
-            Size = UDim2.new(1, 0, 0, 38),
+            Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false
@@ -939,19 +941,19 @@ function Dropdown.new(text, parent, options, callback, window)
             Utility.Create("TextLabel", {
                 Name = "Label",
                 Size = UDim2.new(1, -50, 1, 0),
-                Position = UDim2.new(0, 15, 0, 0),
+                Position = UDim2.new(0, 12, 0, 0),
                 BackgroundTransparency = 1,
-                Text = self.Text .. ": " .. tostring(self.Value),
+                Text = self.Text .. " : " .. tostring(self.Value),
                 TextColor3 = Theme.TextSecondary,
-                TextSize = 14,
+                TextSize = 13,
                 Font = Theme.FontMedium,
                 TextXAlignment = Enum.TextXAlignment.Left
             }),
             -- Arrow Indicator (Lucide Chevron)
             Utility.Create("ImageLabel", {
                 Name = "Arrow",
-                Size = UDim2.new(0, 16, 0, 16),
-                Position = UDim2.new(1, -25, 0.5, 0),
+                Size = UDim2.new(0, 14, 0, 14),
+                Position = UDim2.new(1, -20, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundTransparency = 1,
                 Image = chevron.Url,
@@ -960,53 +962,34 @@ function Dropdown.new(text, parent, options, callback, window)
                 ImageColor3 = Theme.TextSecondary,
                 ZIndex = 2
             })
-        }),
-        -- Options Scrolling Container (Initially hidden / sized to 0)
-        Utility.Create("ScrollingFrame", {
-            Name = "OptionsContainer",
-            Size = UDim2.new(1, -10, 0, 0),
-            Position = UDim2.new(0, 5, 0, 38),
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            ScrollBarThickness = 2,
-            ScrollBarImageColor3 = Theme.Border,
-            ScrollingDirection = Enum.ScrollingDirection.Y,
-            Visible = false
-        }, {
-            Utility.Create("UIListLayout", {
-                Padding = UDim.new(0, 4),
-                SortOrder = Enum.SortOrder.LayoutOrder
-            }),
-            Utility.Create("UIPadding", {
-                PaddingTop = UDim.new(0, 4),
-                PaddingBottom = UDim.new(0, 4),
-                PaddingLeft = UDim.new(0, 10),
-                PaddingRight = UDim.new(0, 10)
-            })
         })
     })
     
     self.Trigger = self.Frame:FindFirstChild("Trigger")
     self.Label = self.Trigger:FindFirstChild("Label")
     self.Arrow = self.Trigger:FindFirstChild("Arrow")
-    self.OptionsContainer = self.Frame:FindFirstChild("OptionsContainer")
     self.Stroke = self.Frame:FindFirstChildOfClass("UIStroke")
-    
-    -- Populate options
-    self:Refresh(self.List, false)
     
     -- Hover effect
     self.Trigger.MouseEnter:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
+        Utility.Tween(self.Label, { TextColor3 = Theme.TextPrimary }, 0.15)
+        Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextPrimary }, 0.15)
     end)
     
     self.Trigger.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
+        Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
+        Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextSecondary }, 0.15)
     end)
     
     -- Click toggle
     self.Trigger.MouseButton1Click:Connect(function()
-        self:Toggle()
+        if self.Backdrop then
+            self:ClosePopup()
+        else
+            self:OpenPopup()
+        end
     end)
     
     Utility.AddClickEffect(self.Frame)
@@ -1020,40 +1003,255 @@ function Dropdown.new(text, parent, options, callback, window)
         self.Window.FlagElements[self.Flag] = self
     end
     
-    -- Initialize with default
+    -- Initialize displayed text
     self:Set(self.Value, true)
     
     return self
 end
 
-function Dropdown:Toggle()
-    self.Opened = not self.Opened
+function Dropdown:OpenPopup()
+    if self.Backdrop then return end
     
-    local optionsCount = #self.List
-    local maxDropdownHeight = 150
-    local optionHeight = 30
-    local calculatedOptionsHeight = math.min(maxDropdownHeight, optionsCount * optionHeight + 8)
-    
-    local targetFrameHeight = self.Opened and (38 + calculatedOptionsHeight) or 38
-    local targetOptionsHeight = self.Opened and calculatedOptionsHeight or 0
-    local targetArrowRotation = self.Opened and 180 or 0
-    
-    if self.Opened then
-        self.OptionsContainer.Visible = true
+    -- Close any other open dropdown in this window
+    if self.Window and self.Window.OpenDropdown and self.Window.OpenDropdown ~= self then
+        self.Window.OpenDropdown:ClosePopup()
+    end
+    if self.Window then
+        self.Window.OpenDropdown = self
     end
     
-    Utility.Tween(self.Arrow, { Rotation = targetArrowRotation }, 0.15)
-    Utility.Tween(self.OptionsContainer, { Size = UDim2.new(1, -10, 0, targetOptionsHeight) }, 0.15)
+    local scale = self.Window.UIScale.Scale
+    local width = self.Frame.AbsoluteSize.X / scale
+    local localX = (self.Frame.AbsolutePosition.X - self.Window.MainFrame.AbsolutePosition.X) / scale
+    local localY = (self.Frame.AbsolutePosition.Y - self.Window.MainFrame.AbsolutePosition.Y) / scale
     
-    local frameTween = Utility.Tween(self.Frame, { Size = UDim2.new(1, 0, 0, targetFrameHeight) }, 0.15)
+    -- Calculated dimensions
+    local popupHeight = 170
+    local maxBottom = localY + 38 + 4 + popupHeight
+    local overflow = maxBottom > (self.Window.MainFrame.AbsoluteSize.Y / scale)
+    local targetY = overflow and (localY - popupHeight - 4) or (localY + 38 + 4)
     
-    if not self.Opened then
-        frameTween.Completed:Connect(function()
-            if not self.Opened then
-                self.OptionsContainer.Visible = false
+    -- Backdrop full screen block to dismiss popup on click outside
+    self.Backdrop = Utility.Create("TextButton", {
+        Name = "DropdownBackdrop",
+        Parent = self.Window.MainFrame,
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 50,
+        Active = true
+    })
+    
+    self.Backdrop.MouseButton1Click:Connect(function()
+        self:ClosePopup()
+    end)
+    
+    -- Popup Panel
+    self.Popup = Utility.Create("Frame", {
+        Name = "DropdownPopup",
+        Parent = self.Backdrop,
+        Size = UDim2.new(0, width, 0, 0), -- Start at height 0 for opening zoom
+        Position = UDim2.new(0, localX, 0, targetY),
+        BackgroundColor3 = Theme.Header,
+        BorderSizePixel = 0,
+        ZIndex = 51,
+        ClipsDescendants = true
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+        Utility.Create("UIStroke", {
+            Color = Theme.Border,
+            Thickness = 1,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        })
+    })
+    
+    -- Search Input Container
+    local searchContainer = Utility.Create("Frame", {
+        Name = "SearchContainer",
+        Parent = self.Popup,
+        Size = UDim2.new(1, -16, 0, 28),
+        Position = UDim2.new(0, 8, 0, 8),
+        BackgroundColor3 = Theme.Background,
+        BorderSizePixel = 0,
+        ZIndex = 52
+    }, {
+        Utility.Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+        Utility.Create("UIStroke", {
+            Color = Theme.Border,
+            Thickness = 1
+        })
+    })
+    
+    local searchIconAsset = Lucide.GetAsset("search", 48)
+    local searchIcon = Utility.Create("ImageLabel", {
+        Name = "SearchIcon",
+        Parent = searchContainer,
+        Size = UDim2.new(0, 12, 0, 12),
+        Position = UDim2.new(0, 8, 0.5, -6),
+        BackgroundTransparency = 1,
+        Image = searchIconAsset.Url,
+        ImageRectSize = searchIconAsset.ImageRectSize,
+        ImageRectOffset = searchIconAsset.ImageRectOffset,
+        ImageColor3 = Theme.TextSecondary,
+        ZIndex = 53
+    })
+    
+    local searchBox = Utility.Create("TextBox", {
+        Name = "SearchBox",
+        Parent = searchContainer,
+        Size = UDim2.new(1, -30, 1, 0),
+        Position = UDim2.new(0, 26, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Search...",
+        PlaceholderColor3 = Theme.TextMuted,
+        TextColor3 = Theme.TextPrimary,
+        TextSize = 12,
+        Font = Theme.FontMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false,
+        ZIndex = 53
+    })
+    
+    -- Scrolling frame for options
+    local optionsContainer = Utility.Create("ScrollingFrame", {
+        Name = "OptionsContainer",
+        Parent = self.Popup,
+        Size = UDim2.new(1, 0, 1, -44),
+        Position = UDim2.new(0, 0, 0, 44),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 2,
+        ScrollBarImageColor3 = Theme.Border,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ZIndex = 52
+    }, {
+        Utility.Create("UIListLayout", {
+            Padding = UDim.new(0, 4),
+            SortOrder = Enum.SortOrder.LayoutOrder
+        }),
+        Utility.Create("UIPadding", {
+            PaddingTop = UDim.new(0, 4),
+            PaddingBottom = UDim.new(0, 4),
+            PaddingLeft = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8)
+        })
+    })
+    
+    local uiListLayout = optionsContainer:FindFirstChildOfClass("UIListLayout")
+    
+    -- Function to populate items
+    local function populateOptions(filterQuery)
+        filterQuery = filterQuery and string.lower(filterQuery) or ""
+        
+        -- Clear current list items
+        for _, child in ipairs(optionsContainer:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        
+        local index = 0
+        for _, option in ipairs(self.List) do
+            local optStr = tostring(option)
+            if filterQuery == "" or string.find(string.lower(optStr), filterQuery) then
+                index = index + 1
+                local isSelected = (option == self.Value)
+                
+                local optionBtn = Utility.Create("TextButton", {
+                    Name = "Option_" .. optStr,
+                    Parent = optionsContainer,
+                    Size = UDim2.new(1, 0, 0, 26),
+                    BackgroundColor3 = Theme.Card,
+                    BackgroundTransparency = 1, -- Hover background defaults to transparent
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = index,
+                    ZIndex = 53
+                }, {
+                    Utility.Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                    Utility.Create("TextLabel", {
+                        Name = "OptionLabel",
+                        Size = UDim2.new(1, -20, 1, 0),
+                        Position = UDim2.new(0, 10, 0, 0),
+                        BackgroundTransparency = 1,
+                        Text = optStr,
+                        TextColor3 = isSelected and Theme.Accent or Theme.TextSecondary,
+                        TextSize = 12,
+                        Font = Theme.FontMedium,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        ZIndex = 54
+                    })
+                })
+                
+                local optLabel = optionBtn:FindFirstChild("OptionLabel")
+                
+                optionBtn.MouseEnter:Connect(function()
+                    Utility.Tween(optionBtn, { BackgroundTransparency = 0 }, 0.1)
+                    if not isSelected then
+                        Utility.Tween(optLabel, { TextColor3 = Theme.TextPrimary }, 0.1)
+                    end
+                end)
+                
+                optionBtn.MouseLeave:Connect(function()
+                    Utility.Tween(optionBtn, { BackgroundTransparency = 1 }, 0.1)
+                    if not isSelected then
+                        Utility.Tween(optLabel, { TextColor3 = Theme.TextSecondary }, 0.1)
+                    end
+                end)
+                
+                optionBtn.MouseButton1Click:Connect(function()
+                    self:Set(option)
+                    self:ClosePopup()
+                end)
+            end
+        end
+        
+        -- Dynamic canvas sizing
+        task.spawn(function()
+            task.wait()
+            if optionsContainer and uiListLayout then
+                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 8)
             end
         end)
     end
+    
+    -- Filter change listener
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        populateOptions(searchBox.Text)
+    end)
+    
+    -- Populate default list
+    populateOptions()
+    
+    -- Open animation
+    Utility.Tween(self.Arrow, { Rotation = 180 }, 0.15)
+    Utility.Tween(self.Popup, { Size = UDim2.new(0, width, 0, popupHeight) }, 0.15)
+end
+
+function Dropdown:ClosePopup()
+    if not self.Backdrop then return end
+    
+    local scale = self.Window.UIScale.Scale
+    local width = self.Frame.AbsoluteSize.X / scale
+    
+    if self.Window and self.Window.OpenDropdown == self then
+        self.Window.OpenDropdown = nil
+    end
+    
+    -- Close animation
+    Utility.Tween(self.Arrow, { Rotation = 0 }, 0.1)
+    local tween = Utility.Tween(self.Popup, { Size = UDim2.new(0, width, 0, 0) }, 0.1)
+    
+    local currentBackdrop = self.Backdrop
+    self.Backdrop = nil
+    self.Popup = nil
+    
+    tween.Completed:Connect(function()
+        currentBackdrop:Destroy()
+    end)
 end
 
 function Dropdown:Set(val, force)
@@ -1064,15 +1262,23 @@ function Dropdown:Set(val, force)
         self.Window.Flags[self.Flag] = val
     end
     
-    self.Label.Text = self.Text .. ": " .. tostring(val)
+    self.Label.Text = self.Text .. " : " .. tostring(val)
     
-    -- Highlight active option
-    for _, child in ipairs(self.OptionsContainer:GetChildren()) do
-        if child:IsA("TextButton") then
-            local isSelected = child.Name == "Option_" .. tostring(val)
-            Utility.Tween(child, {
-                TextColor3 = isSelected and Theme.Accent or Theme.TextSecondary
-            }, 0.1)
+    -- If popup is open, we can update highlights
+    if self.Popup then
+        local optionsContainer = self.Popup:FindFirstChild("OptionsContainer")
+        if optionsContainer then
+            for _, child in ipairs(optionsContainer:GetChildren()) do
+                if child:IsA("TextButton") then
+                    local isSelected = (child.Name == "Option_" .. tostring(val))
+                    local label = child:FindFirstChild("OptionLabel")
+                    if label then
+                        Utility.Tween(label, {
+                            TextColor3 = isSelected and Theme.Accent or Theme.TextSecondary
+                        }, 0.1)
+                    end
+                end
+            end
         end
     end
     
@@ -1087,50 +1293,6 @@ end
 function Dropdown:Refresh(newList, selectFirst)
     self.List = newList or {}
     
-    -- Clear current items
-    for _, child in ipairs(self.OptionsContainer:GetChildren()) do
-        if child:IsA("TextButton") then
-            child:Destroy()
-        end
-    end
-    
-    -- Re-populate
-    for index, option in ipairs(self.List) do
-        local optionBtn = Utility.Create("TextButton", {
-            Name = "Option_" .. tostring(option),
-            Parent = self.OptionsContainer,
-            Size = UDim2.new(1, 0, 0, 26),
-            BackgroundTransparency = 1,
-            Text = tostring(option),
-            TextColor3 = (option == self.Value) and Theme.Accent or Theme.TextSecondary,
-            TextSize = 13,
-            Font = Theme.FontMedium,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            LayoutOrder = index
-        })
-        
-        optionBtn.MouseEnter:Connect(function()
-            if self.Value ~= option then
-                Utility.Tween(optionBtn, { TextColor3 = Theme.TextPrimary }, 0.1)
-            end
-        end)
-        
-        optionBtn.MouseLeave:Connect(function()
-            if self.Value ~= option then
-                Utility.Tween(optionBtn, { TextColor3 = Theme.TextSecondary }, 0.1)
-            end
-        end)
-        
-        optionBtn.MouseButton1Click:Connect(function()
-            self:Set(option)
-            self:Toggle() -- Close
-        end)
-    end
-    
-    -- Recalculate Scroll Canvas
-    local uiListLayout = self.OptionsContainer:FindFirstChildOfClass("UIListLayout")
-    self.OptionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 8)
-    
     if selectFirst and #self.List > 0 then
         self:Set(self.List[1])
     elseif not table.find(self.List, self.Value) and #self.List > 0 then
@@ -1139,10 +1301,9 @@ function Dropdown:Refresh(newList, selectFirst)
         self:Set(self.Value, true)
     end
     
-    -- If open, adjust heights
-    if self.Opened then
-        self.Opened = false
-        self:Toggle()
+    -- If open, close popup to force reload next time
+    if self.Backdrop then
+        self:ClosePopup()
     end
 end
 
