@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:13:39
+	Generated at: 2026-07-05 23:17:40
 	Simple, Beautiful, Proper
 ]=]
 
@@ -336,15 +336,15 @@ function Utility.AddClickEffect(button)
             -- Localized target size (uses shorter edge to fit within the button, ensuring zero corner clipping)
             local diameter = math.max(math.min(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 1.5, 45)
             
-            -- Tween expand and fade (using TweenService directly with 0.7s duration to be slower and highly visible)
-            local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            -- Tween expand and fade (using TweenService directly with 0.35s duration for a snappy response)
+            local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             local tween = TweenService:Create(ripple, tweenInfo, {
                 Size = UDim2.new(0, diameter, 0, diameter),
                 BackgroundTransparency = 1
             })
             tween:Play()
             
-            task.delay(0.7, function()
+            task.delay(0.35, function()
                 ripple:Destroy()
             end)
         end
