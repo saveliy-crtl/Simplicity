@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:05:54
+	Generated at: 2026-07-05 23:07:07
 	Simple, Beautiful, Proper
 ]=]
 
@@ -328,13 +328,13 @@ function Utility.AddClickEffect(button)
             ripple.ZIndex = 10
             
             local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(1, 0) -- Pure circle
+            corner.CornerRadius = UDim.new(0, 9999) -- Huge offset guarantees a perfect circle rendering in Roblox
             corner.Parent = ripple
             
             ripple.Parent = button
             
-            -- Target size (1.5x the largest size of the button to cover fully)
-            local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 1.5
+            -- Localized target size (uses shorter edge to fit within the button, ensuring zero corner clipping)
+            local diameter = math.max(math.min(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 1.5, 45)
             
             -- Tween expand and fade (using TweenService directly with 0.7s duration to be slower and highly visible)
             local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
