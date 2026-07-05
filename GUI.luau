@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:29:47
+	Generated at: 2026-07-05 22:34:19
 	Simple, Beautiful, Proper
 ]=]
 
@@ -23,38 +23,38 @@ local FontMedium = Font.fromEnum(Enum.Font.GothamMedium)
 local FontSemibold = Font.fromEnum(Enum.Font.GothamBold)
 
 pcall(function()
-    FontRegular = Font.new("rbxasset://fonts/families/WorkSans.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-    FontMedium = Font.new("rbxasset://fonts/families/WorkSans.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
-    FontSemibold = Font.new("rbxasset://fonts/families/WorkSans.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+    FontRegular = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+    FontMedium = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+    FontSemibold = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
 end)
 
 local Theme = {
     
-    -- Core colors (Midnight Cyberpunk / Obsidian Teal palette)
-    Background = Color3.fromRGB(11, 12, 16),        -- Deep Obsidian Blue-Black
-    Sidebar = Color3.fromRGB(7, 8, 11),            -- Sleek darker sidebar
-    Header = Color3.fromRGB(16, 17, 23),           -- Elevated Header Slate
-    Card = Color3.fromRGB(20, 22, 30),             -- Card Surface (Obsidian Grey)
-    CardHover = Color3.fromRGB(28, 30, 41),        -- Card Surface Hover
+    -- Core colors (Deep Charcoal / Royal Purple Dark theme)
+    Background = Color3.fromRGB(18, 18, 22),        -- Deep Charcoal Black
+    Sidebar = Color3.fromRGB(13, 13, 16),          -- Sleek darker sidebar
+    Header = Color3.fromRGB(24, 24, 28),           -- Elevated Header Panel
+    Card = Color3.fromRGB(28, 28, 34),             -- Slate Card Surface
+    CardHover = Color3.fromRGB(36, 36, 44),        -- Card Surface Hover
     
-    -- Accent colors (Electric Teal & Cyber Blue gradient)
-    Accent = Color3.fromRGB(0, 230, 187),          -- Electric Teal
-    AccentGradientStart = Color3.fromRGB(0, 230, 187),
-    AccentGradientEnd = Color3.fromRGB(0, 162, 255),  -- Cyber Blue
+    -- Accent colors (Royal Purple & Lavender gradient)
+    Accent = Color3.fromRGB(139, 92, 246),         -- Royal Purple (Vibrant Accent)
+    AccentGradientStart = Color3.fromRGB(139, 92, 246),
+    AccentGradientEnd = Color3.fromRGB(167, 139, 250), -- Pastel Lavender
     
     -- Borders and strokes
-    Border = Color3.fromRGB(30, 32, 44),           -- Muted Border
-    BorderActive = Color3.fromRGB(0, 230, 187),   -- Active Electric Teal Border
-    BorderMuted = Color3.fromRGB(16, 17, 23),       -- Faint Card Border
+    Border = Color3.fromRGB(40, 40, 48),           -- Dark Gray Border
+    BorderActive = Color3.fromRGB(139, 92, 246),   -- Active Purple Border
+    BorderMuted = Color3.fromRGB(24, 24, 28),       -- Muted Sidebar Border
     
     -- Text colors
-    TextPrimary = Color3.fromRGB(245, 245, 250),   -- High contrast crisp white-blue
-    TextSecondary = Color3.fromRGB(150, 155, 175), -- Soft silver-grey
-    TextMuted = Color3.fromRGB(95, 100, 120),      -- Deep muted grey
+    TextPrimary = Color3.fromRGB(255, 255, 255),   -- Pure White
+    TextSecondary = Color3.fromRGB(161, 161, 170), -- Muted Gray (Zinc 400)
+    TextMuted = Color3.fromRGB(113, 113, 122),     -- Dark Gray (Zinc 500)
     
     -- Status colors
-    Success = Color3.fromRGB(0, 230, 187),         -- Electric Teal (Success)
-    Failure = Color3.fromRGB(255, 80, 80),         -- Cyber Red/Pink
+    Success = Color3.fromRGB(16, 185, 129),        -- Emerald Green
+    Failure = Color3.fromRGB(239, 68, 68),         -- Crimson Red
     
     -- Typography
     FontSemibold = FontSemibold,
@@ -2215,11 +2215,11 @@ function Window.new(title, configFolder)
             BackgroundColor3 = Theme.Border,
             BorderSizePixel = 0
         }),
-        -- Tab button container
+        -- Tab button container (positioned lower)
         Utility.Create("ScrollingFrame", {
             Name = "TabContainer",
-            Size = UDim2.new(1, -5, 1, -10),
-            Position = UDim2.new(0, 0, 0, 5),
+            Size = UDim2.new(1, -5, 1, -45),
+            Position = UDim2.new(0, 0, 0, 40),
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
             CanvasSize = UDim2.new(0, 0, 0, 0),
