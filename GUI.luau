@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:54:57
+	Generated at: 2026-07-05 22:57:05
 	Simple, Beautiful, Proper
 ]=]
 
@@ -336,13 +336,15 @@ function Utility.AddClickEffect(button)
             -- Target size (double the largest size of the button to cover fully)
             local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2.0
             
-            -- Tween expand and fade
-            Utility.Tween(ripple, {
+            -- Tween expand and fade (using TweenService directly with 0.7s duration to be slower and highly visible)
+            local tweenInfo = TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local tween = TweenService:Create(ripple, tweenInfo, {
                 Size = UDim2.new(0, diameter, 0, diameter),
                 BackgroundTransparency = 1
-            }, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            })
+            tween:Play()
             
-            task.delay(0.5, function()
+            task.delay(0.7, function()
                 ripple:Destroy()
             end)
         end
@@ -1447,6 +1449,7 @@ end
 modules["components/Slider"] = function()local Theme = require("theme")
 local Utility = require("utility")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local Slider = {}
 Slider.__index = Slider
@@ -1571,7 +1574,7 @@ function Slider.new(text, parent, options, callback, window)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.Dragging = true
             updateValue(input)
-            Utility.Tween(self.Knob, { Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -7, 0.5, -7) }, 0.1)
+            TweenService:Create(self.Knob, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -7, 0.5, -7) }):Play()
         end
     end)
     
@@ -1584,7 +1587,7 @@ function Slider.new(text, parent, options, callback, window)
     UserInputService.InputEnded:Connect(function(input)
         if self.Dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             self.Dragging = false
-            Utility.Tween(self.Knob, { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(1, -6, 0.5, -6) }, 0.1)
+            TweenService:Create(self.Knob, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(1, -6, 0.5, -6) }):Play()
         end
     end)
     
@@ -1618,7 +1621,11 @@ function Slider:Set(val)
     -- Handle divide by zero edge case
     if self.Max == self.Min then percentage = 0 end
     
-    Utility.Tween(self.Fill, { Size = UDim2.new(percentage, 0, 1, 0) }, 0.08)
+    if self.Dragging then
+        self.Fill.Size = UDim2.new(percentage, 0, 1, 0)
+    else
+        TweenService:Create(self.Fill, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(percentage, 0, 1, 0) }):Play()
+    end
     
     -- Callback trigger
     task.spawn(function()
@@ -2135,10 +2142,18 @@ function Window.new(title, configFolder)
         ResetOnSpawn = false
     })
     
+    -- Responsive Container Frame
+    self.Container = Utility.Create("Frame", {
+        Name = "Container",
+        Parent = self.ScreenGui,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1
+    })
+    
     -- Main Frame
     self.MainFrame = Utility.Create("Frame", {
         Name = "MainFrame",
-        Parent = self.ScreenGui,
+        Parent = self.Container,
         Size = UDim2.new(0, 580, 0, 380),
         Position = UDim2.new(0.5, -290, 0.5, -190),
         BackgroundColor3 = Theme.Background,
@@ -2156,8 +2171,15 @@ function Window.new(title, configFolder)
     -- Responsive UIScale Setup for Mobile / PC
     local uiScale = Utility.Create("UIScale", {
         Name = "UIScale",
-        Parent = self.MainFrame,
+        Parent = self.Container,
         Scale = 1
+    })
+    
+    -- Appear Scale UIScale for Launch/Toggle Animations
+    local appearScale = Utility.Create("UIScale", {
+        Name = "AppearScale",
+        Parent = self.MainFrame,
+        Scale = 0.85
     })
 
     local function updateScale()
@@ -2391,6 +2413,12 @@ function Window.new(title, configFolder)
             self:ToggleVisibility()
         end
     end)
+    
+    -- Animate Launch (Appear Scale)
+    task.spawn(function()
+        task.wait(0.02)
+        Utility.Tween(appearScale, { Scale = 1.0 })
+    end)
 
     return self
 end
@@ -2422,7 +2450,31 @@ end
 
 function Window:ToggleVisibility()
     if self.Closed then return end
-    self.MainFrame.Visible = not self.MainFrame.Visible
+    
+    local appearScale = self.MainFrame:FindFirstChild("AppearScale")
+    if not appearScale then
+        self.MainFrame.Visible = not self.MainFrame.Visible
+        return
+    end
+    
+    if self.MainFrame.Visible then
+        local tween = Utility.Tween(appearScale, { Scale = 0.85 })
+        self.ToggleConnection = tween.Completed:Connect(function()
+            self.MainFrame.Visible = false
+            if self.ToggleConnection then
+                self.ToggleConnection:Disconnect()
+                self.ToggleConnection = nil
+            end
+        end)
+    else
+        if self.ToggleConnection then
+            self.ToggleConnection:Disconnect()
+            self.ToggleConnection = nil
+        end
+        appearScale.Scale = 0.85
+        self.MainFrame.Visible = true
+        Utility.Tween(appearScale, { Scale = 1.0 })
+    end
 end
 
 function Window:Close()
@@ -2436,14 +2488,14 @@ function Window:Close()
         self.ViewportConnection:Disconnect()
     end
     
-    -- Play closing scale and fade tween
-    local currentPos = self.MainFrame.Position
-    Utility.Tween(self.MainFrame, {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = currentPos + UDim2.new(0, 290, 0, 190)
-    }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    local appearScale = self.MainFrame:FindFirstChild("AppearScale")
+    if appearScale then
+        local tween = Utility.Tween(appearScale, { Scale = 0.85 })
+        tween.Completed:Wait()
+    else
+        task.wait(0.15)
+    end
     
-    task.wait(0.2)
     self.ScreenGui:Destroy()
 end
 
