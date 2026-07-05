@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:36:15
+	Generated at: 2026-07-05 22:46:19
 	Simple, Beautiful, Proper
 ]=]
 
@@ -37,14 +37,14 @@ local Theme = {
     Card = Color3.fromRGB(28, 28, 34),             -- Slate Card Surface
     CardHover = Color3.fromRGB(36, 36, 44),        -- Card Surface Hover
     
-    -- Accent colors (Royal Purple & Lavender gradient)
-    Accent = Color3.fromRGB(139, 92, 246),         -- Royal Purple (Vibrant Accent)
-    AccentGradientStart = Color3.fromRGB(139, 92, 246),
-    AccentGradientEnd = Color3.fromRGB(167, 139, 250), -- Pastel Lavender
+    -- Accent colors (Emerald Green & Teal gradient)
+    Accent = Color3.fromRGB(16, 185, 129),         -- Emerald Green (Vibrant Accent)
+    AccentGradientStart = Color3.fromRGB(16, 185, 129),
+    AccentGradientEnd = Color3.fromRGB(52, 211, 153), -- Light Mint Green
     
     -- Borders and strokes
     Border = Color3.fromRGB(40, 40, 48),           -- Dark Gray Border
-    BorderActive = Color3.fromRGB(139, 92, 246),   -- Active Purple Border
+    BorderActive = Color3.fromRGB(16, 185, 129),   -- Active Green Border
     BorderMuted = Color3.fromRGB(24, 24, 28),       -- Muted Sidebar Border
     
     -- Text colors
@@ -287,6 +287,28 @@ function Utility.ListConfigs(folder)
     return configs
 end
 
+-- Add a tactile bounce/scale effect on click/press
+function Utility.AddClickEffect(button)
+    local uiScale = button:FindFirstChild("ClickScale")
+    if not uiScale then
+        uiScale = Instance.new("UIScale")
+        uiScale.Name = "ClickScale"
+        uiScale.Parent = button
+    end
+    
+    button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Utility.Tween(uiScale, { Scale = 0.95 }, 0.08)
+        end
+    end)
+    
+    button.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Utility.Tween(uiScale, { Scale = 1.0 }, 0.15)
+        end
+    end)
+end
+
 return Utility
 end
 
@@ -388,12 +410,10 @@ function Button.new(text, parent, callback, icon)
     -- Interaction animations
     self.Frame.MouseEnter:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
-        Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
-        Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
     end)
     
     self.Frame.MouseButton1Down:Connect(function()
@@ -411,6 +431,8 @@ function Button.new(text, parent, callback, icon)
             end
         end)
     end)
+    
+    Utility.AddClickEffect(self.Frame)
     
     return self
 end
@@ -644,14 +666,14 @@ function Colorpicker.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.HeaderFrame.MouseEnter:Connect(function()
-        Utility.Tween(self.Stroke, { Color = Theme.BorderActive }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.HeaderFrame.MouseLeave:Connect(function()
-        Utility.Tween(self.Stroke, { Color = self.Opened and Theme.BorderActive or Theme.Border }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
+    
+    Utility.AddClickEffect(self.PreviewBtn)
     
     -- Sliders Dragging logic
     local function updateHue(input)
@@ -744,9 +766,6 @@ function Colorpicker:Toggle()
     
     if self.Opened then
         self.Pane.Visible = true
-        Utility.Tween(self.Stroke, { Color = Theme.BorderActive }, 0.15)
-    else
-        Utility.Tween(self.Stroke, { Color = Theme.Border }, 0.15)
     end
     
     local frameTween = Utility.Tween(self.Frame, { Size = UDim2.new(1, 0, 0, targetFrameHeight) }, 0.15)
@@ -932,12 +951,10 @@ function Dropdown.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Trigger.MouseEnter:Connect(function()
-        Utility.Tween(self.Stroke, { Color = Theme.BorderActive }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Trigger.MouseLeave:Connect(function()
-        Utility.Tween(self.Stroke, { Color = self.Opened and Theme.BorderActive or Theme.Border }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -945,6 +962,8 @@ function Dropdown.new(text, parent, options, callback, window)
     self.Trigger.MouseButton1Click:Connect(function()
         self:Toggle()
     end)
+    
+    Utility.AddClickEffect(self.Frame)
     
     -- Register Flag
     if self.Flag and self.Window then
@@ -975,9 +994,6 @@ function Dropdown:Toggle()
     
     if self.Opened then
         self.OptionsContainer.Visible = true
-        Utility.Tween(self.Stroke, { Color = Theme.BorderActive }, 0.15)
-    else
-        Utility.Tween(self.Stroke, { Color = Theme.Border }, 0.15)
     end
     
     Utility.Tween(self.Arrow, { Rotation = targetArrowRotation }, 0.15)
@@ -1181,16 +1197,10 @@ function Keybind.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
-        if not self.Binding then
-            Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
-        end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if not self.Binding then
-            Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
-        end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -1198,6 +1208,8 @@ function Keybind.new(text, parent, options, callback, window)
     self.BindButton.MouseButton1Click:Connect(function()
         self:StartBinding()
     end)
+    
+    Utility.AddClickEffect(self.BindButton)
     
     -- Register Flag
     if self.Flag and self.Window then
@@ -1359,21 +1371,11 @@ function Label.newSection(text, parent)
         Size = UDim2.new(1, 0, 0, 32),
         BackgroundTransparency = 1
     }, {
-        -- Small vertical accent indicator
-        Utility.Create("Frame", {
-            Name = "AccentBar",
-            Size = UDim2.new(0, 3, 0, 14),
-            Position = UDim2.new(0, 5, 0.5, -7),
-            BackgroundColor3 = Theme.Accent,
-            BorderSizePixel = 0
-        }, {
-            Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall })
-        }),
-        -- Section Text
+        -- Section Text (No accent bar, aligned to margin)
         Utility.Create("TextLabel", {
             Name = "TextLabel",
-            Size = UDim2.new(1, -20, 1, 0),
-            Position = UDim2.new(0, 14, 0, 0),
+            Size = UDim2.new(1, -10, 1, 0),
+            Position = UDim2.new(0, 5, 0, 0),
             BackgroundTransparency = 1,
             Text = string.upper(self.Text),
             TextColor3 = Theme.TextPrimary,
@@ -1485,11 +1487,7 @@ function Slider.new(text, parent, options, callback, window)
                     BackgroundColor3 = Theme.TextPrimary,
                     BorderSizePixel = 0
                 }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                    Utility.Create("UIStroke", {
-                        Color = Theme.Accent,
-                        Thickness = 1
-                    })
+                    Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) })
                 })
             })
         })
@@ -1503,12 +1501,10 @@ function Slider.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
-        Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -1630,7 +1626,7 @@ function Tab.new(name, window, icon)
         Text = "",
         AutoButtonColor = false
     }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+        Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         
         -- Text Label
         Utility.Create("TextLabel", {
@@ -1717,6 +1713,8 @@ function Tab.new(name, window, icon)
     self.Button.MouseButton1Click:Connect(function()
         self.Window:SelectTab(self.Name)
     end)
+    
+    Utility.AddClickEffect(self.Button)
     
     return self
 end
@@ -1880,27 +1878,19 @@ function TextBox.new(text, parent, placeholder, options, callback, window)
     -- Focus effects
     self.Input.Focused:Connect(function()
         Utility.Tween(self.InputStroke, { Color = Theme.Accent }, 0.15)
-        Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
     end)
     
     self.Input.FocusLost:Connect(function(enterPressed)
         Utility.Tween(self.InputStroke, { Color = Theme.Border }, 0.15)
-        Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
         self:Set(self.Input.Text)
     end)
     
     -- Main frame hover effects
     self.Frame.MouseEnter:Connect(function()
-        if not self.Input.Focused then
-            Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
-        end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if not self.Input.Focused then
-            Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
-        end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2015,12 +2005,10 @@ function Toggle.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
-        Utility.Tween(stroke, { Color = Theme.BorderActive }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        Utility.Tween(stroke, { Color = Theme.Border }, 0.15)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2028,6 +2016,8 @@ function Toggle.new(text, parent, options, callback, window)
     self.Frame.MouseButton1Click:Connect(function()
         self:Set(not self.Value)
     end)
+    
+    Utility.AddClickEffect(self.Frame)
     
     -- Register Flag in Window (if flag option was provided)
     if self.Flag and self.Window then
@@ -2275,11 +2265,11 @@ function Window.new(title, configFolder)
             BackgroundColor3 = Theme.Border,
             BorderSizePixel = 0
         }),
-        -- Tab button container (positioned lower)
+        -- Tab button container (aligned with page header content)
         Utility.Create("ScrollingFrame", {
             Name = "TabContainer",
-            Size = UDim2.new(1, -5, 1, -45),
-            Position = UDim2.new(0, 0, 0, 40),
+            Size = UDim2.new(1, -5, 1, -15),
+            Position = UDim2.new(0, 0, 0, 10),
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
             CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -2339,6 +2329,9 @@ function Window.new(title, configFolder)
     self.CloseButton.MouseButton1Click:Connect(function()
         self:Close()
     end)
+    
+    Utility.AddClickEffect(self.MinimizeButton)
+    Utility.AddClickEffect(self.CloseButton)
     
     -- Auto-adjust CanvasSize of Sidebar TabContainer
     local tabContainer = self.Sidebar:FindFirstChild("TabContainer")
