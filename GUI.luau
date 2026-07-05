@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:24:00
+	Generated at: 2026-07-05 23:26:46
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1022,27 +1022,42 @@ function Dropdown:OpenPopup()
     
     local scale = self.Window.UIScale.Scale
     local width = self.Frame.AbsoluteSize.X / scale
-    local localX = (self.Frame.AbsolutePosition.X - self.Window.MainFrame.AbsolutePosition.X) / scale
-    local localY = (self.Frame.AbsolutePosition.Y - self.Window.MainFrame.AbsolutePosition.Y) / scale
     
-    -- Calculated dimensions
-    local targetWidth = width - 24
-    local targetX = localX + 12
-    local popupHeight = 170
+    -- Screen absolute coordinates
+    local localX = self.Frame.AbsolutePosition.X / scale
+    local localY = self.Frame.AbsolutePosition.Y / scale
+    
+    -- Width and alignment: Fixed width of 200px, aligned to the right edge of the trigger card
+    local targetWidth = 200
+    local targetX = localX + (width - targetWidth)
+    
+    -- Calculated dimensions (taller Y height)
+    local popupHeight = 220
+    
+    local camera = workspace.CurrentCamera
+    local screenHeight = camera and (camera.ViewportSize.Y / scale) or 1080
+    
     local maxBottom = localY + 38 + 4 + popupHeight
-    local overflow = maxBottom > (self.Window.MainFrame.AbsoluteSize.Y / scale)
+    local overflow = maxBottom > screenHeight
     local targetY = overflow and (localY - popupHeight - 4) or (localY + 38 + 4)
     
-    -- Backdrop full screen block to dismiss popup on click outside
+    -- Backdrop full screen block parented to the Window ScreenGui directly (allows popping outside window)
     self.Backdrop = Utility.Create("TextButton", {
         Name = "DropdownBackdrop",
-        Parent = self.Window.MainFrame,
+        Parent = self.Window.ScreenGui,
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = "",
-        ZIndex = 50,
+        ZIndex = 99999, -- Float above absolutely everything
         Active = true
+    })
+    
+    -- Reapply window's UIScale to the backdrop so the popup scales identically
+    Utility.Create("UIScale", {
+        Name = "UIScale",
+        Parent = self.Backdrop,
+        Scale = scale
     })
     
     self.Backdrop.MouseButton1Click:Connect(function()
@@ -1057,7 +1072,7 @@ function Dropdown:OpenPopup()
         Position = UDim2.new(0, targetX, 0, targetY),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
-        ZIndex = 51,
+        ZIndex = 100000,
         ClipsDescendants = true
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
@@ -1068,17 +1083,17 @@ function Dropdown:OpenPopup()
         })
     })
     
-    -- Search Input Container
+    -- Search Input Container (Larger, more padded insides)
     local searchContainer = Utility.Create("Frame", {
         Name = "SearchContainer",
         Parent = self.Popup,
-        Size = UDim2.new(1, -16, 0, 28),
-        Position = UDim2.new(0, 8, 0, 8),
+        Size = UDim2.new(1, -20, 0, 32),
+        Position = UDim2.new(0, 10, 0, 10),
         BackgroundColor3 = Theme.Background,
         BorderSizePixel = 0,
-        ZIndex = 52
+        ZIndex = 100001
     }, {
-        Utility.Create("UICorner", { CornerRadius = UDim.new(0, 5) }),
+        Utility.Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
         Utility.Create("UIStroke", {
             Color = Theme.Border,
             Thickness = 1
@@ -1090,55 +1105,55 @@ function Dropdown:OpenPopup()
         Name = "SearchIcon",
         Parent = searchContainer,
         Size = UDim2.new(0, 12, 0, 12),
-        Position = UDim2.new(0, 8, 0.5, -6),
+        Position = UDim2.new(0, 10, 0.5, -6),
         BackgroundTransparency = 1,
         Image = searchIconAsset.Url,
         ImageRectSize = searchIconAsset.ImageRectSize,
         ImageRectOffset = searchIconAsset.ImageRectOffset,
         ImageColor3 = Theme.TextSecondary,
-        ZIndex = 53
+        ZIndex = 100002
     })
     
     local searchBox = Utility.Create("TextBox", {
         Name = "SearchBox",
         Parent = searchContainer,
-        Size = UDim2.new(1, -30, 1, 0),
-        Position = UDim2.new(0, 26, 0, 0),
+        Size = UDim2.new(1, -38, 1, 0),
+        Position = UDim2.new(0, 30, 0, 0),
         BackgroundTransparency = 1,
         Text = "",
         PlaceholderText = "Search...",
         PlaceholderColor3 = Theme.TextMuted,
         TextColor3 = Theme.TextPrimary,
-        TextSize = 12,
+        TextSize = 13,
         Font = Theme.FontMedium,
         TextXAlignment = Enum.TextXAlignment.Left,
         ClearTextOnFocus = false,
-        ZIndex = 53
+        ZIndex = 100002
     })
     
-    -- Scrolling frame for options
+    -- Scrolling frame for options (More padded)
     local optionsContainer = Utility.Create("ScrollingFrame", {
         Name = "OptionsContainer",
         Parent = self.Popup,
-        Size = UDim2.new(1, 0, 1, -44),
-        Position = UDim2.new(0, 0, 0, 44),
+        Size = UDim2.new(1, 0, 1, -52),
+        Position = UDim2.new(0, 0, 0, 52),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 2,
         ScrollBarImageColor3 = Theme.Border,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
-        ZIndex = 52
+        ZIndex = 100001
     }, {
         Utility.Create("UIListLayout", {
-            Padding = UDim.new(0, 4),
+            Padding = UDim.new(0, 5),
             SortOrder = Enum.SortOrder.LayoutOrder
         }),
         Utility.Create("UIPadding", {
             PaddingTop = UDim.new(0, 4),
-            PaddingBottom = UDim.new(0, 4),
-            PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 8)
+            PaddingBottom = UDim.new(0, 8),
+            PaddingLeft = UDim.new(0, 10),
+            PaddingRight = UDim.new(0, 10)
         })
     })
     
@@ -1165,26 +1180,26 @@ function Dropdown:OpenPopup()
                 local optionBtn = Utility.Create("TextButton", {
                     Name = "Option_" .. optStr,
                     Parent = optionsContainer,
-                    Size = UDim2.new(1, 0, 0, 26),
+                    Size = UDim2.new(1, 0, 0, 30), -- Taller option height (30px instead of 26px)
                     BackgroundColor3 = Theme.Card,
-                    BackgroundTransparency = 1, -- Hover background defaults to transparent
+                    BackgroundTransparency = 1,
                     Text = "",
                     AutoButtonColor = false,
                     LayoutOrder = index,
-                    ZIndex = 53
+                    ZIndex = 100002
                 }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                    Utility.Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
                     Utility.Create("TextLabel", {
                         Name = "OptionLabel",
                         Size = UDim2.new(1, -20, 1, 0),
-                        Position = UDim2.new(0, 10, 0, 0),
+                        Position = UDim2.new(0, 12, 0, 0),
                         BackgroundTransparency = 1,
                         Text = optStr,
                         TextColor3 = isSelected and Theme.Accent or Theme.TextSecondary,
-                        TextSize = 12,
+                        TextSize = 13, -- More sized text (13 instead of 12)
                         Font = Theme.FontMedium,
                         TextXAlignment = Enum.TextXAlignment.Left,
-                        ZIndex = 54
+                        ZIndex = 100003
                     })
                 })
                 
@@ -1215,7 +1230,7 @@ function Dropdown:OpenPopup()
         task.spawn(function()
             task.wait()
             if optionsContainer and uiListLayout then
-                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 8)
+                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 12)
             end
         end)
     end
@@ -1236,9 +1251,7 @@ end
 function Dropdown:ClosePopup()
     if not self.Backdrop then return end
     
-    local scale = self.Window.UIScale.Scale
-    local width = self.Frame.AbsoluteSize.X / scale
-    local targetWidth = width - 24
+    local targetWidth = 200
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
