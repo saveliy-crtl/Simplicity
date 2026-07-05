@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:34:19
+	Generated at: 2026-07-05 22:36:15
 	Simple, Beautiful, Proper
 ]=]
 
@@ -163,11 +163,19 @@ function Utility.MakeDraggable(frame, dragHandle)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
+            
+            -- Adjust delta if a UIScale exists in the frame
+            local scale = 1
+            local uiScale = frame:FindFirstChildOfClass("UIScale")
+            if uiScale then
+                scale = uiScale.Scale
+            end
+            
             frame.Position = UDim2.new(
                 startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
+                startPosition.X.Offset + (delta.X / scale),
                 startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
+                startPosition.Y.Offset + (delta.Y / scale)
             )
         end
     end)
@@ -2068,6 +2076,7 @@ end
 -- MODULE: components/Window
 modules["components/Window"] = function()local Theme = require("theme")
 local Utility = require("utility")
+local Lucide = require("packages/lucide-roblox")
 local UserInputService = game:GetService("UserInputService")
 
 local Window = {}
@@ -2109,6 +2118,36 @@ function Window.new(title, configFolder)
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         })
     })
+
+    -- Responsive UIScale Setup for Mobile / PC
+    local uiScale = Utility.Create("UIScale", {
+        Name = "UIScale",
+        Parent = self.MainFrame,
+        Scale = 1
+    })
+
+    local function updateScale()
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+        local viewportSize = camera.ViewportSize
+        local width = viewportSize.X
+        local height = viewportSize.Y
+        
+        local scale = 1
+        -- Only scale down on smaller mobile/tablet viewports (PC is kept at 1)
+        if width < 1000 or height < 600 then
+            local scaleX = width / 1000
+            local scaleY = height / 600
+            scale = math.min(scaleX, scaleY)
+            -- Clamp scale so it doesn't get ridiculously small (min 0.65)
+            scale = math.clamp(scale, 0.65, 1)
+        end
+        uiScale.Scale = scale
+    end
+
+    updateScale()
+    self.ViewportConnection = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+
 
 
     -- Header
@@ -2164,17 +2203,29 @@ function Window.new(title, configFolder)
     -- Close and Minimize Buttons
     local actionsContainer = self.Header:FindFirstChild("Actions")
     
+    local minusAsset = Lucide.GetAsset("minus", 48)
+    local xAsset = Lucide.GetAsset("x", 48)
+    
     self.MinimizeButton = Utility.Create("TextButton", {
         Name = "Minimize",
         Parent = actionsContainer,
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(0, 5, 0.5, -15),
         BackgroundTransparency = 1,
-        Text = "-",
-        TextColor3 = Theme.TextSecondary,
-        TextSize = 20,
-        Font = Theme.FontMedium,
+        Text = "",
         ZIndex = 3
+    }, {
+        Utility.Create("ImageLabel", {
+            Name = "Icon",
+            Size = UDim2.new(0, 16, 0, 16),
+            Position = UDim2.new(0.5, -8, 0.5, -8),
+            BackgroundTransparency = 1,
+            Image = minusAsset.Url,
+            ImageRectSize = minusAsset.ImageRectSize,
+            ImageRectOffset = minusAsset.ImageRectOffset,
+            ImageColor3 = Theme.TextSecondary,
+            ZIndex = 4
+        })
     })
     
     self.CloseButton = Utility.Create("TextButton", {
@@ -2183,11 +2234,20 @@ function Window.new(title, configFolder)
         Size = UDim2.new(0, 30, 0, 30),
         Position = UDim2.new(0, 40, 0.5, -15),
         BackgroundTransparency = 1,
-        Text = "\195\151",
-        TextColor3 = Theme.TextSecondary,
-        TextSize = 24,
-        Font = Theme.FontMedium,
+        Text = "",
         ZIndex = 3
+    }, {
+        Utility.Create("ImageLabel", {
+            Name = "Icon",
+            Size = UDim2.new(0, 16, 0, 16),
+            Position = UDim2.new(0.5, -8, 0.5, -8),
+            BackgroundTransparency = 1,
+            Image = xAsset.Url,
+            ImageRectSize = xAsset.ImageRectSize,
+            ImageRectOffset = xAsset.ImageRectOffset,
+            ImageColor3 = Theme.TextSecondary,
+            ZIndex = 4
+        })
     })
     
     -- Sidebar (Left)
@@ -2249,20 +2309,32 @@ function Window.new(title, configFolder)
     
     -- Button Connections
     self.MinimizeButton.MouseEnter:Connect(function()
-        Utility.Tween(self.MinimizeButton, { TextColor3 = Theme.Accent }, 0.15)
+        local icon = self.MinimizeButton:FindFirstChild("Icon")
+        if icon then
+            Utility.Tween(icon, { ImageColor3 = Theme.Accent }, 0.15)
+        end
     end)
     self.MinimizeButton.MouseLeave:Connect(function()
-        Utility.Tween(self.MinimizeButton, { TextColor3 = Theme.TextSecondary }, 0.15)
+        local icon = self.MinimizeButton:FindFirstChild("Icon")
+        if icon then
+            Utility.Tween(icon, { ImageColor3 = Theme.TextSecondary }, 0.15)
+        end
     end)
     self.MinimizeButton.MouseButton1Click:Connect(function()
         self:ToggleMinimize()
     end)
     
     self.CloseButton.MouseEnter:Connect(function()
-        Utility.Tween(self.CloseButton, { TextColor3 = Theme.Failure }, 0.15)
+        local icon = self.CloseButton:FindFirstChild("Icon")
+        if icon then
+            Utility.Tween(icon, { ImageColor3 = Theme.Failure }, 0.15)
+        end
     end)
     self.CloseButton.MouseLeave:Connect(function()
-        Utility.Tween(self.CloseButton, { TextColor3 = Theme.TextSecondary }, 0.15)
+        local icon = self.CloseButton:FindFirstChild("Icon")
+        if icon then
+            Utility.Tween(icon, { ImageColor3 = Theme.TextSecondary }, 0.15)
+        end
     end)
     self.CloseButton.MouseButton1Click:Connect(function()
         self:Close()
@@ -2322,6 +2394,9 @@ function Window:Close()
     
     if self.InputConnection then
         self.InputConnection:Disconnect()
+    end
+    if self.ViewportConnection then
+        self.ViewportConnection:Disconnect()
     end
     
     -- Play closing scale and fade tween
