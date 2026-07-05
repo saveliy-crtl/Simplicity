@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:46:19
+	Generated at: 2026-07-05 22:48:40
 	Simple, Beautiful, Proper
 ]=]
 
@@ -287,24 +287,56 @@ function Utility.ListConfigs(folder)
     return configs
 end
 
--- Add a tactile bounce/scale effect on click/press
+-- Add a tactile ripple circle effect on click/press
 function Utility.AddClickEffect(button)
-    local uiScale = button:FindFirstChild("ClickScale")
-    if not uiScale then
-        uiScale = Instance.new("UIScale")
-        uiScale.Name = "ClickScale"
-        uiScale.Parent = button
-    end
+    button.ClipsDescendants = true
     
     button.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Utility.Tween(uiScale, { Scale = 0.95 }, 0.08)
-        end
-    end)
-    
-    button.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Utility.Tween(uiScale, { Scale = 1.0 }, 0.15)
+            -- Get accumulated UIScale factor
+            local scale = 1
+            local curr = button
+            while curr do
+                local uiScale = curr:FindFirstChildOfClass("UIScale")
+                if uiScale then
+                    scale = scale * uiScale.Scale
+                end
+                curr = curr.Parent
+            end
+            
+            -- Calculate click relative position
+            local localX = (input.Position.X - button.AbsolutePosition.X) / scale
+            local localY = (input.Position.Y - button.AbsolutePosition.Y) / scale
+            
+            -- Create ripple circle
+            local ripple = Instance.new("Frame")
+            ripple.Name = "Ripple"
+            ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+            ripple.Position = UDim2.new(0, localX, 0, localY)
+            ripple.Size = UDim2.new(0, 0, 0, 0)
+            ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            ripple.BackgroundTransparency = 0.75
+            ripple.BorderSizePixel = 0
+            ripple.ZIndex = 10
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(1, 0)
+            corner.Parent = ripple
+            
+            ripple.Parent = button
+            
+            -- Target size (double the largest size of the button to cover fully)
+            local diameter = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2.0
+            
+            -- Tween expand and fade
+            Utility.Tween(ripple, {
+                Size = UDim2.new(0, diameter, 0, diameter),
+                BackgroundTransparency = 1
+            }, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            
+            task.delay(0.5, function()
+                ripple:Destroy()
+            end)
         end
     end)
 end
