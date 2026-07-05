@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:20:14
+	Generated at: 2026-07-05 23:24:00
 	Simple, Beautiful, Proper
 ]=]
 
@@ -923,7 +923,7 @@ function Dropdown.new(text, parent, options, callback, window)
         BackgroundColor3 = Theme.Card,
         BorderSizePixel = 0
     }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
             Color = Theme.Border,
             Thickness = 1,
@@ -1026,6 +1026,8 @@ function Dropdown:OpenPopup()
     local localY = (self.Frame.AbsolutePosition.Y - self.Window.MainFrame.AbsolutePosition.Y) / scale
     
     -- Calculated dimensions
+    local targetWidth = width - 24
+    local targetX = localX + 12
     local popupHeight = 170
     local maxBottom = localY + 38 + 4 + popupHeight
     local overflow = maxBottom > (self.Window.MainFrame.AbsoluteSize.Y / scale)
@@ -1051,14 +1053,14 @@ function Dropdown:OpenPopup()
     self.Popup = Utility.Create("Frame", {
         Name = "DropdownPopup",
         Parent = self.Backdrop,
-        Size = UDim2.new(0, width, 0, 0), -- Start at height 0 for opening zoom
-        Position = UDim2.new(0, localX, 0, targetY),
+        Size = UDim2.new(0, targetWidth, 0, 0), -- Start at height 0 for opening zoom
+        Position = UDim2.new(0, targetX, 0, targetY),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
         ZIndex = 51,
         ClipsDescendants = true
     }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
             Color = Theme.Border,
             Thickness = 1,
@@ -1228,7 +1230,7 @@ function Dropdown:OpenPopup()
     
     -- Open animation
     Utility.Tween(self.Arrow, { Rotation = 180 }, 0.15)
-    Utility.Tween(self.Popup, { Size = UDim2.new(0, width, 0, popupHeight) }, 0.15)
+    Utility.Tween(self.Popup, { Size = UDim2.new(0, targetWidth, 0, popupHeight) }, 0.15)
 end
 
 function Dropdown:ClosePopup()
@@ -1236,6 +1238,7 @@ function Dropdown:ClosePopup()
     
     local scale = self.Window.UIScale.Scale
     local width = self.Frame.AbsoluteSize.X / scale
+    local targetWidth = width - 24
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
@@ -1243,7 +1246,7 @@ function Dropdown:ClosePopup()
     
     -- Close animation
     Utility.Tween(self.Arrow, { Rotation = 0 }, 0.1)
-    local tween = Utility.Tween(self.Popup, { Size = UDim2.new(0, width, 0, 0) }, 0.1)
+    local tween = Utility.Tween(self.Popup, { Size = UDim2.new(0, targetWidth, 0, 0) }, 0.1)
     
     local currentBackdrop = self.Backdrop
     self.Backdrop = nil
