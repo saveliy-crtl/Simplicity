@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:09:47
+	Generated at: 2026-07-05 23:12:02
 	Simple, Beautiful, Proper
 ]=]
 
@@ -2175,13 +2175,13 @@ function Window.new(title, configFolder)
     self.UIScale = Utility.Create("UIScale", {
         Name = "UIScale",
         Parent = self.Container,
-        Scale = 0.85
+        Scale = 0.94
     })
     
     -- Value holder for animating the appear scale cleanly
     self.AppearScaleValue = Instance.new("NumberValue")
     self.AppearScaleValue.Name = "AppearScaleValue"
-    self.AppearScaleValue.Value = 0.85
+    self.AppearScaleValue.Value = 0.94
     self.AppearScaleValue.Parent = self.Container
     
     self.ResponsiveScale = 1
@@ -2461,26 +2461,7 @@ end
 
 function Window:ToggleVisibility()
     if self.Closed then return end
-    
-    if self.MainFrame.Visible then
-        local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 0.85 })
-        tween:Play()
-        self.ToggleConnection = tween.Completed:Connect(function()
-            self.MainFrame.Visible = false
-            if self.ToggleConnection then
-                self.ToggleConnection:Disconnect()
-                self.ToggleConnection = nil
-            end
-        end)
-    else
-        if self.ToggleConnection then
-            self.ToggleConnection:Disconnect()
-            self.ToggleConnection = nil
-        end
-        self.AppearScaleValue.Value = 0.85
-        self.MainFrame.Visible = true
-        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
-    end
+    self.MainFrame.Visible = not self.MainFrame.Visible
 end
 
 function Window:Close()
@@ -2493,10 +2474,6 @@ function Window:Close()
     if self.ViewportConnection then
         self.ViewportConnection:Disconnect()
     end
-    
-    local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 0.85 })
-    tween:Play()
-    tween.Completed:Wait()
     
     self.ScreenGui:Destroy()
 end
