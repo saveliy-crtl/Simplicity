@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 23:07:07
+	Generated at: 2026-07-05 23:09:47
 	Simple, Beautiful, Proper
 ]=]
 
@@ -297,7 +297,7 @@ end
 
 -- Add a tactile ripple circle effect on click/press
 function Utility.AddClickEffect(button)
-    button.ClipsDescendants = true
+    button.ClipsDescendants = false
     
     button.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -2143,12 +2143,22 @@ function Window.new(title, configFolder)
         ResetOnSpawn = false
     })
     
-    -- Main Frame
-    self.MainFrame = Utility.Create("Frame", {
-        Name = "MainFrame",
+    -- Centered pivot container for scaling & positioning
+    self.Container = Utility.Create("Frame", {
+        Name = "WindowContainer",
         Parent = self.ScreenGui,
         Size = UDim2.new(0, 580, 0, 380),
-        Position = UDim2.new(0.5, -290, 0.5, -190),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1
+    })
+    
+    -- Main Frame (styled window)
+    self.MainFrame = Utility.Create("Frame", {
+        Name = "MainFrame",
+        Parent = self.Container,
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Theme.Background,
         ClipsDescendants = true,
         BorderSizePixel = 0
@@ -2161,10 +2171,10 @@ function Window.new(title, configFolder)
         })
     })
 
-    -- Single UIScale Setup
+    -- Single UIScale Setup (on the Container for centered zoom)
     self.UIScale = Utility.Create("UIScale", {
         Name = "UIScale",
-        Parent = self.MainFrame,
+        Parent = self.Container,
         Scale = 0.85
     })
     
@@ -2172,7 +2182,7 @@ function Window.new(title, configFolder)
     self.AppearScaleValue = Instance.new("NumberValue")
     self.AppearScaleValue.Name = "AppearScaleValue"
     self.AppearScaleValue.Value = 0.85
-    self.AppearScaleValue.Parent = self.MainFrame
+    self.AppearScaleValue.Parent = self.Container
     
     self.ResponsiveScale = 1
     
@@ -2362,7 +2372,7 @@ function Window.new(title, configFolder)
     })
     
     -- Make window draggable via Header
-    Utility.MakeDraggable(self.MainFrame, self.Header)
+    Utility.MakeDraggable(self.Container, self.Header)
     
     -- Button Connections
     self.MinimizeButton.MouseEnter:Connect(function()
@@ -2437,7 +2447,7 @@ function Window:ToggleMinimize()
         self.ContentContainer.Visible = false
     end
     
-    local tween = Utility.Tween(self.MainFrame, { Size = UDim2.new(0, 580, 0, targetHeight) }, Theme.TweenSpeed, Theme.TweenEasing, Theme.TweenDirection)
+    local tween = Utility.Tween(self.MainFrame, { Size = UDim2.new(1, 0, 0, targetHeight) }, Theme.TweenSpeed, Theme.TweenEasing, Theme.TweenDirection)
     
     if not self.Minimized then
         tween.Completed:Connect(function()
