@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-05 22:52:01
+	Generated at: 2026-07-05 22:54:57
 	Simple, Beautiful, Proper
 ]=]
 
@@ -890,6 +890,7 @@ end
 -- MODULE: components/Dropdown
 modules["components/Dropdown"] = function()local Theme = require("theme")
 local Utility = require("utility")
+local Lucide = require("packages/lucide-roblox")
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
@@ -906,6 +907,8 @@ function Dropdown.new(text, parent, options, callback, window)
     self.Window = window
     self.Opened = false
     self.Value = self.Default or (self.List[1] or "")
+    
+    local chevron = Lucide.GetAsset("chevron-down", 48)
     
     -- Main Container Frame
     self.Frame = Utility.Create("Frame", {
@@ -942,17 +945,18 @@ function Dropdown.new(text, parent, options, callback, window)
                 Font = Theme.FontMedium,
                 TextXAlignment = Enum.TextXAlignment.Left
             }),
-            -- Arrow Indicator
-            Utility.Create("TextLabel", {
+            -- Arrow Indicator (Lucide Chevron)
+            Utility.Create("ImageLabel", {
                 Name = "Arrow",
-                Size = UDim2.new(0, 20, 1, 0),
-                Position = UDim2.new(1, -35, 0, 0),
+                Size = UDim2.new(0, 16, 0, 16),
+                Position = UDim2.new(1, -25, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundTransparency = 1,
-                Text = "\226\150\188",
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 10,
-                Font = Theme.FontRegular,
-                TextXAlignment = Enum.TextXAlignment.Center
+                Image = chevron.Url,
+                ImageRectSize = chevron.ImageRectSize,
+                ImageRectOffset = chevron.ImageRectOffset,
+                ImageColor3 = Theme.TextSecondary,
+                ZIndex = 2
             })
         }),
         -- Options Scrolling Container (Initially hidden / sized to 0)
