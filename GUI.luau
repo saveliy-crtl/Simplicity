@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 18:45:40
+	Generated at: 2026-07-06 19:22:46
 	Simple, Beautiful, Proper
 ]=]
 
@@ -504,6 +504,26 @@ modules["components/Colorpicker"] = function()local Theme = require("theme")
 local Utility = require("utility")
 local UserInputService = game:GetService("UserInputService")
 
+local function rgbToHex(color)
+    local r = math.clamp(math.round(color.R * 255), 0, 255)
+    local g = math.clamp(math.round(color.G * 255), 0, 255)
+    local b = math.clamp(math.round(color.B * 255), 0, 255)
+    return string.format("#%02X%02X%02X", r, g, b)
+end
+
+local function hexToRgb(hex)
+    hex = hex:gsub("#", "")
+    if #hex == 6 then
+        local r = tonumber(hex:sub(1, 2), 16)
+        local g = tonumber(hex:sub(3, 4), 16)
+        local b = tonumber(hex:sub(5, 6), 16)
+        if r and g and b then
+            return Color3.fromRGB(r, g, b)
+        end
+    end
+    return nil
+end
+
 local Colorpicker = {}
 Colorpicker.__index = Colorpicker
 
@@ -612,7 +632,7 @@ end
 
 function Colorpicker:OpenDialogue()
     local Dialogue = require("components/Dialogue")
-    local dialogue = Dialogue.new(self.Text, self.Window, UDim2.new(0, 240, 0, 160))
+    local dialogue = Dialogue.new(self.Text, self.Window, UDim2.new(0, 240, 0, 214))
     
     -- Dialogue Hue Track
     local hueLabel = Utility.Create("TextLabel", {
@@ -766,6 +786,77 @@ function Colorpicker:OpenDialogue()
         Utility.Create("UIStroke", { Color = Theme.Border, Thickness = 1 })
     })
     
+    -- Hex Code Label
+    local hexLabel = Utility.Create("TextLabel", {
+        Name = "HexLabel",
+        Parent = dialogue.Content,
+        Size = UDim2.new(0, 80, 0, 22),
+        Position = UDim2.new(0, 15, 0, 145),
+        BackgroundTransparency = 1,
+        Text = "Hex Code",
+        TextColor3 = Theme.TextSecondary,
+        TextSize = 12,
+        Font = Theme.FontMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 205
+    })
+    
+    -- Hex Code Input Box
+    local hexInputHolder = Utility.Create("Frame", {
+        Name = "HexInputHolder",
+        Parent = dialogue.Content,
+        Size = UDim2.new(1, -110, 0, 22),
+        Position = UDim2.new(0, 95, 0, 145),
+        BackgroundColor3 = Theme.BorderMuted,
+        BorderSizePixel = 0,
+        ZIndex = 205
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+        Utility.Create("UIStroke", {
+            Name = "Stroke",
+            Color = Theme.Border,
+            Thickness = 1
+        }),
+        Utility.Create("TextBox", {
+            Name = "Input",
+            Size = UDim2.new(1, -16, 1, 0),
+            Position = UDim2.new(0, 8, 0, 0),
+            BackgroundTransparency = 1,
+            Text = rgbToHex(self.Value),
+            PlaceholderText = "#FFFFFF",
+            PlaceholderColor3 = Theme.TextMuted,
+            TextColor3 = Theme.TextPrimary,
+            TextSize = 12,
+            Font = Theme.FontMedium,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ClearTextOnFocus = false,
+            ZIndex = 206
+        })
+    })
+    
+    local hexInput = hexInputHolder:FindFirstChild("Input")
+    local hexStroke = hexInputHolder:FindFirstChild("Stroke")
+    
+    self.DialogueHexInput = hexInput
+    
+    -- Focus effect
+    local connFocus = hexInput.Focused:Connect(function()
+        Utility.Tween(hexStroke, { Color = Theme.Accent }, 0.15)
+    end)
+    
+    local connFocusLost = hexInput.FocusLost:Connect(function(enterPressed)
+        Utility.Tween(hexStroke, { Color = Theme.Border }, 0.15)
+        
+        local text = hexInput.Text
+        local newColor = hexToRgb(text)
+        if newColor then
+            self:Set(newColor)
+        else
+            -- Revert invalid hex code
+            hexInput.Text = rgbToHex(self.Value)
+        end
+    end)
+    
     -- Register local controls to the object
     self.DialogueHueTrack = hueTrack
     self.DialogueHueKnob = hueKnob
@@ -851,6 +942,8 @@ function Colorpicker:OpenDialogue()
         connBeganVal:Disconnect()
         connChanged:Disconnect()
         connEnded:Disconnect()
+        connFocus:Disconnect()
+        connFocusLost:Disconnect()
         
         self.DialogueHueTrack = nil
         self.DialogueHueKnob = nil
@@ -861,6 +954,7 @@ function Colorpicker:OpenDialogue()
         self.DialogueValGradient = nil
         self.DialogueValKnob = nil
         self.DialoguePreviewBar = nil
+        self.DialogueHexInput = nil
     end)
 end
 
@@ -880,6 +974,9 @@ function Colorpicker:UpdateHSV()
     end
     if self.DialoguePreviewBar then
         self.DialoguePreviewBar.BackgroundColor3 = color
+    end
+    if self.DialogueHexInput and not self.DialogueHexInput:IsFocused() then
+        self.DialogueHexInput.Text = rgbToHex(color)
     end
     
     -- Update Flags array
@@ -931,6 +1028,9 @@ function Colorpicker:Set(color, force)
     if self.DialoguePreviewBar then
         self.DialoguePreviewBar.BackgroundColor3 = color
     end
+    if self.DialogueHexInput and not self.DialogueHexInput:IsFocused() then
+        self.DialogueHexInput.Text = rgbToHex(color)
+    end
     
     if self.Flag and self.Window and self.Window.Flags then
         self.Window.Flags[self.Flag] = {color.R, color.G, color.B}
@@ -950,6 +1050,7 @@ end
 -- MODULE: components/Dialogue
 modules["components/Dialogue"] = function()local Theme = require("theme")
 local Utility = require("utility")
+local Lucide = require("packages/lucide-roblox")
 
 local Dialogue = {}
 Dialogue.__index = Dialogue
@@ -958,18 +1059,17 @@ function Dialogue.new(title, window, size)
     local self = setmetatable({}, Dialogue)
     
     self.Window = window
-    self.Size = size or UDim2.new(0, 240, 0, 160)
+    self.Size = size or UDim2.new(0, 240, 0, 200)
     self.Title = title or "Dialogue"
     
     -- Dialogue Backdrop parented to self.Window.Container (blackout covers ONLY the window!)
-    self.Backdrop = Utility.Create("TextButton", {
+    self.Backdrop = Utility.Create("Frame", { -- Using Frame to prevent button-drag release gotchas in Roblox
         Name = "DialogueBackdrop",
         Parent = self.Window.Container,
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 1, -- Start transparent for fade-in
-        Text = "",
         ZIndex = 200,
         Active = true
     }, {
@@ -977,11 +1077,25 @@ function Dialogue.new(title, window, size)
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius })
     })
     
-    self.Backdrop.MouseButton1Click:Connect(function()
-        self:Close()
+    -- Detect clicks OUTSIDE the dialogue box to close it
+    self.Backdrop.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local pos = input.Position
+            local frame = self.Frame
+            if frame then
+                local framePos = frame.AbsolutePosition
+                local frameSize = frame.AbsoluteSize
+                
+                -- Check if click is outside dialogue frame bounds
+                if pos.X < framePos.X or pos.X > (framePos.X + frameSize.X) or
+                   pos.Y < framePos.Y or pos.Y > (framePos.Y + frameSize.Y) then
+                    self:Close()
+                end
+            end
+        end
     end)
     
-    -- Dialogue Body Container (handles shadow and centering, no clipping)
+    -- Dialogue Body Container (handles shadow, centering, and UIScale)
     self.FrameContainer = Utility.Create("Frame", {
         Name = "DialogueFrameContainer",
         Parent = self.Backdrop,
@@ -991,7 +1105,15 @@ function Dialogue.new(title, window, size)
         BackgroundTransparency = 1,
         ZIndex = 201,
         ClipsDescendants = false
+    }, {
+        -- Sizing to UIScale as requested!
+        Utility.Create("UIScale", {
+            Name = "UIScale",
+            Scale = 0
+        })
     })
+    
+    self.UIScale = self.FrameContainer:FindFirstChild("UIScale")
     
     -- Add native drop shadow using UIShadow API
     Utility.AddShadow(self.FrameContainer, {
@@ -1015,30 +1137,81 @@ function Dialogue.new(title, window, size)
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         }),
-        -- Content Area (covers 100% of the frame since dialogue has no header!)
+        -- Header Bar
+        Utility.Create("Frame", {
+            Name = "Header",
+            Size = UDim2.new(1, 0, 0, 32),
+            BackgroundColor3 = Theme.Background,
+            BorderSizePixel = 0
+        }, {
+            Utility.Create("TextLabel", {
+                Name = "Title",
+                Size = UDim2.new(1, -40, 1, 0),
+                Position = UDim2.new(0, 12, 0, 0),
+                BackgroundTransparency = 1,
+                Text = self.Title,
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 13,
+                Font = Theme.FontSemibold,
+                TextXAlignment = Enum.TextXAlignment.Left
+            }),
+            -- Close Button
+            Utility.Create("TextButton", {
+                Name = "Close",
+                Size = UDim2.new(0, 24, 0, 24),
+                Position = UDim2.new(1, -28, 0.5, -12),
+                BackgroundTransparency = 1,
+                Text = ""
+            }, {
+                Utility.Create("ImageLabel", {
+                    Name = "Icon",
+                    Size = UDim2.new(0, 12, 0, 12),
+                    Position = UDim2.new(0.5, -6, 0.5, -6),
+                    BackgroundTransparency = 1,
+                    Image = Lucide.GetAsset("x", 48).Url,
+                    ImageRectSize = Lucide.GetAsset("x", 48).ImageRectSize,
+                    ImageRectOffset = Lucide.GetAsset("x", 48).ImageRectOffset,
+                    ImageColor3 = Theme.TextSecondary
+                })
+            })
+        }),
+        -- Content Area (shifted down by 32px to accommodate header)
         Utility.Create("Frame", {
             Name = "Content",
-            Size = UDim2.new(1, 0, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
+            Size = UDim2.new(1, 0, 1, -32),
+            Position = UDim2.new(0, 0, 0, 32),
             BackgroundTransparency = 1,
             ZIndex = 203
         })
     })
     
+    self.Header = self.Frame:FindFirstChild("Header")
     self.Content = self.Frame:FindFirstChild("Content")
+    self.CloseBtn = self.Header:FindFirstChild("Close")
     
-    -- Opening Animations (Fade dim & Zoom pop)
+    -- Close button logic
+    self.CloseBtn.MouseButton1Click:Connect(function()
+        self:Close()
+    end)
+    
+    -- Hover effect on Close
+    local closeIcon = self.CloseBtn:FindFirstChild("Icon")
+    self.CloseBtn.MouseEnter:Connect(function()
+        Utility.Tween(closeIcon, { ImageColor3 = Theme.Failure }, 0.15)
+    end)
+    self.CloseBtn.MouseLeave:Connect(function()
+        Utility.Tween(closeIcon, { ImageColor3 = Theme.TextSecondary }, 0.15)
+    end)
+    
+    -- Opening Animations (Fade dim & Zoom pop using UIScale!)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 0.65 }, 0.2)
-    
-    -- Pop zoom effect starting from center
-    self.FrameContainer.Size = UDim2.new(0, 0, 0, 0)
-    Utility.Tween(self.FrameContainer, { Size = self.Size }, 0.2, Enum.EasingStyle.Back)
+    Utility.Tween(self.UIScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Back)
     
     return self
 end
 
 function Dialogue:Close()
-    local closeTween = Utility.Tween(self.FrameContainer, { Size = UDim2.new(0, 0, 0, 0) }, 0.15)
+    local closeTween = Utility.Tween(self.UIScale, { Scale = 0 }, 0.15)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 1 }, 0.15)
     
     closeTween.Completed:Connect(function()
@@ -2611,6 +2784,7 @@ function Window.new(title, configFolder)
         ZIndex = 2
     }, {
         Utility.Create("UICorner", {
+            Name = "Corner",
             TopLeftRadius = Theme.CornerRadius,
             TopRightRadius = Theme.CornerRadius,
             BottomLeftRadius = UDim.new(0, 0),
@@ -2650,6 +2824,9 @@ function Window.new(title, configFolder)
             ZIndex = 3
         })
     })
+    
+    self.HeaderCorner = self.Header:FindFirstChild("Corner")
+    self.HeaderDivider = self.Header:FindFirstChild("Divider")
     
     -- Close and Minimize Buttons
     local actionsContainer = self.Header:FindFirstChild("Actions")
@@ -2825,12 +3002,28 @@ function Window:ToggleMinimize()
     
     local targetHeight = self.Minimized and 45 or 380
     
+    -- Dynamically round bottom corners of header when minimized, and toggle header divider line
+    if self.HeaderCorner then
+        if self.Minimized then
+            self.HeaderCorner.BottomLeftRadius = Theme.CornerRadius
+            self.HeaderCorner.BottomRightRadius = Theme.CornerRadius
+        else
+            self.HeaderCorner.BottomLeftRadius = UDim.new(0, 0)
+            self.HeaderCorner.BottomRightRadius = UDim.new(0, 0)
+        end
+    end
+    if self.HeaderDivider then
+        self.HeaderDivider.Visible = not self.Minimized
+    end
+    
     -- If minimizing, hide the body components immediately/smoothly
     if self.Minimized then
         self.Sidebar.Visible = false
         self.ContentContainer.Visible = false
     end
     
+    -- Tween container size (updates drop shadow bounds!) and main frame size
+    Utility.Tween(self.Container, { Size = UDim2.new(0, 580, 0, targetHeight) }, Theme.TweenSpeed, Theme.TweenEasing, Theme.TweenDirection)
     local tween = Utility.Tween(self.MainFrame, { Size = UDim2.new(1, 0, 0, targetHeight) }, Theme.TweenSpeed, Theme.TweenEasing, Theme.TweenDirection)
     
     if not self.Minimized then
