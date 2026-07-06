@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 21:30:07
+	Generated at: 2026-07-06 22:10:02
 	Simple, Beautiful, Proper
 ]=]
 
@@ -367,6 +367,70 @@ function Utility.AddShadow(parent, options)
         return s
     end)
     return success and shadow or nil
+end
+
+-- Safely fetch external HTTP data (executor only)
+function Utility.HttpGet(url)
+    if game.HttpGet then
+        local success, result = pcall(function()
+            return game:HttpGet(url)
+        end)
+        if success then
+            return result
+        end
+    end
+    return nil
+end
+
+-- Safely download and get custom asset URL for custom images (executor only)
+function Utility.GetCustomAsset(url)
+    -- If already an asset URL, local path, or not running in executor, return as is
+    if not url or string.find(url, "rbxassetid://") or string.find(url, "asset/%%?id=") or not Utility.IsExecutor or not writefile or not game.HttpGet then
+        return url
+    end
+    
+    local success, asset = pcall(function()
+        local filename = "usefulhub_assets/" .. string.match(url, "([^/]+)$")
+        if not string.find(filename, "%%.") then
+            filename = filename .. ".png"
+        end
+        
+        -- Check if file already exists
+        local fileExists = false
+        pcall(function()
+            fileExists = isfile(filename)
+        end)
+        
+        if not fileExists then
+            -- Create assets folder if not exists
+            pcall(function()
+                if isfolder and not isfolder("usefulhub_assets") then
+                    makefolder("usefulhub_assets")
+                end
+            end)
+            
+            local content = game:HttpGet(url)
+            writefile(filename, content)
+        end
+        
+        if getcustomasset then
+            return getcustomasset(filename)
+        end
+        return filename
+    end)
+    
+    return success and asset or url
+end
+
+-- Safely set text to executor clipboard
+function Utility.SetClipboard(text)
+    if setclipboard then
+        pcall(setclipboard, text)
+    elseif toclipboard then
+        pcall(toclipboard, text)
+    else
+        warn("Clipboard copy not supported in this environment.")
+    end
 end
 
 return Utility
@@ -1125,20 +1189,23 @@ function Dialogue.new(title, window, size)
     self.UIScale = self.FrameContainer:FindFirstChild("UIScale")
     
     -- Add native drop shadow using UIShadow API
-    Utility.AddShadow(self.FrameContainer, {
+    self.Shadow = Utility.AddShadow(self.FrameContainer, {
         BlurRadius = UDim.new(0, 20),
         Transparency = 0.5
     })
+    if self.Shadow then
+        self.Shadow.Transparency = 1
+    end
     
     -- Dialogue Body Frame (styled visual frame, clips descendants so contents don't overflow during zoom!)
-    self.Frame = Utility.Create("Frame", {
+    self.Frame = Utility.Create("CanvasGroup", {
         Name = "DialogueFrame",
         Parent = self.FrameContainer,
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
         ZIndex = 202,
-        ClipsDescendants = true
+        GroupTransparency = 1
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
@@ -1228,6 +1295,10 @@ function Dialogue.new(title, window, size)
     -- Opening Animations (Fade dim & Zoom pop using UIScale!)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 0.65 }, 0.2)
     Utility.Tween(self.UIScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Back)
+    Utility.Tween(self.Frame, { GroupTransparency = 0 }, 0.2)
+    if self.Shadow then
+        Utility.Tween(self.Shadow, { Transparency = 0.5 }, 0.2)
+    end
     
     return self
 end
@@ -1239,6 +1310,10 @@ function Dialogue:Close()
     
     local closeTween = Utility.Tween(self.UIScale, { Scale = 0 }, 0.15)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 1 }, 0.15)
+    Utility.Tween(self.Frame, { GroupTransparency = 1 }, 0.15)
+    if self.Shadow then
+        Utility.Tween(self.Shadow, { Transparency = 1 }, 0.15)
+    end
     
     closeTween.Completed:Connect(function()
         self.Backdrop:Destroy()
@@ -1451,20 +1526,23 @@ function Dropdown:OpenPopup()
     self.UIScale = self.PopupContainer:FindFirstChild("UIScale")
     
     -- Add drop shadow using native UIShadow API
-    Utility.AddShadow(self.PopupContainer, {
+    self.Shadow = Utility.AddShadow(self.PopupContainer, {
         BlurRadius = UDim.new(0, 12),
         Transparency = 0.6
     })
+    if self.Shadow then
+        self.Shadow.Transparency = 1
+    end
     
     -- Inner Visual Popup frame (clips descendants so content animates size cleanly)
-    self.Popup = Utility.Create("Frame", {
+    self.Popup = Utility.Create("CanvasGroup", {
         Name = "DropdownPopup",
         Parent = self.PopupContainer,
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
         ZIndex = 101,
-        ClipsDescendants = true
+        GroupTransparency = 1
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
@@ -1638,6 +1716,10 @@ function Dropdown:OpenPopup()
     Utility.Tween(self.Arrow, { Rotation = 180 }, 0.15)
     Utility.Tween(self.SelectStroke, { Color = Theme.Accent }, 0.15)
     Utility.Tween(self.UIScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Back)
+    Utility.Tween(self.Popup, { GroupTransparency = 0 }, 0.2)
+    if self.Shadow then
+        Utility.Tween(self.Shadow, { Transparency = 0.6 }, 0.2)
+    end
 end
 
 function Dropdown:ClosePopup()
@@ -1651,6 +1733,10 @@ function Dropdown:ClosePopup()
     Utility.Tween(self.Arrow, { Rotation = 0 }, 0.1)
     Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.1)
     local tween = Utility.Tween(self.UIScale, { Scale = 0 }, 0.15)
+    Utility.Tween(self.Popup, { GroupTransparency = 1 }, 0.15)
+    if self.Shadow then
+        Utility.Tween(self.Shadow, { Transparency = 1 }, 0.15)
+    end
     
     local currentBackdrop = self.Backdrop
     local currentContainer = self.PopupContainer
@@ -1659,6 +1745,7 @@ function Dropdown:ClosePopup()
     self.PopupContainer = nil
     self.Popup = nil
     self.UIScale = nil
+    self.Shadow = nil
     
     tween.Completed:Connect(function()
         if currentBackdrop then currentBackdrop:Destroy() end
@@ -2019,6 +2106,221 @@ function Label:Set(text)
 end
 
 return Label
+end
+
+-- MODULE: components/Paragraph
+modules["components/Paragraph"] = function()local Theme = require("theme")
+local Utility = require("utility")
+
+local Paragraph = {}
+Paragraph.__index = Paragraph
+
+function Paragraph.new(title, desc, options, parent, window)
+    local self = setmetatable({}, Paragraph)
+    
+    self.Title = title or ""
+    self.Desc = desc or ""
+    self.Options = options or {}
+    self.Window = window
+    
+    -- Main Container Frame
+    self.Frame = Utility.Create("Frame", {
+        Name = "Paragraph_" .. self.Title,
+        Parent = parent,
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = Theme.Card,
+        BorderSizePixel = 0
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+        Utility.Create("UIStroke", {
+            Color = Theme.Border,
+            Thickness = 1,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        }),
+        Utility.Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Vertical,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 10)
+        }),
+        Utility.Create("UIPadding", {
+            PaddingTop = UDim.new(0, 12),
+            PaddingBottom = UDim.new(0, 12),
+            PaddingLeft = UDim.new(0, 14),
+            PaddingRight = UDim.new(0, 14)
+        })
+    })
+    
+    local imageAsset = self.Options.Image or self.Options.image
+    local hasImage = (imageAsset ~= nil and imageAsset ~= "")
+    
+    -- Content row to arrange image and text horizontally
+    local contentRow = Utility.Create("Frame", {
+        Name = "ContentRow",
+        Parent = self.Frame,
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        LayoutOrder = 1
+    }, {
+        Utility.Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 12),
+            VerticalAlignment = Enum.VerticalAlignment.Center
+        })
+    })
+    
+    if hasImage then
+        Utility.Create("ImageLabel", {
+            Name = "Icon",
+            Parent = contentRow,
+            Size = UDim2.new(0, 42, 0, 42),
+            BackgroundTransparency = 1,
+            Image = Utility.GetCustomAsset(imageAsset),
+            ScaleType = Enum.ScaleType.Fit,
+            LayoutOrder = 1
+        }, {
+            Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall })
+        })
+    end
+    
+    local textContainer = Utility.Create("Frame", {
+        Name = "TextContainer",
+        Parent = contentRow,
+        Size = hasImage and UDim2.new(1, -54, 0, 0) or UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        LayoutOrder = 2
+    }, {
+        Utility.Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Vertical,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 3)
+        })
+    })
+    
+    if self.Title ~= "" then
+        self.TitleLabel = Utility.Create("TextLabel", {
+            Name = "Title",
+            Parent = textContainer,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Text = self.Title,
+            TextColor3 = Theme.TextPrimary,
+            TextSize = 13,
+            Font = Theme.FontSemibold,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextWrapped = true,
+            LayoutOrder = 1
+        })
+    end
+    
+    if self.Desc ~= "" then
+        self.DescLabel = Utility.Create("TextLabel", {
+            Name = "Description",
+            Parent = textContainer,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Text = self.Desc,
+            TextColor3 = Theme.TextSecondary,
+            TextSize = 12,
+            Font = Theme.FontRegular,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextWrapped = true,
+            LayoutOrder = 2
+        })
+    end
+    
+    -- Handle buttons/links at the bottom of the paragraph
+    local buttons = self.Options.Buttons or self.Options.buttons
+    if buttons and #buttons > 0 then
+        local buttonsRow = Utility.Create("Frame", {
+            Name = "ButtonsRow",
+            Parent = self.Frame,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            LayoutOrder = 2
+        }, {
+            Utility.Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 10)
+            })
+        })
+        
+        for idx, btnData in ipairs(buttons) do
+            local btn = Utility.Create("TextButton", {
+                Name = "Button_" .. btnData.Text,
+                Parent = buttonsRow,
+                Size = UDim2.new(0, 0, 0, 24),
+                AutomaticSize = Enum.AutomaticSize.X,
+                BackgroundColor3 = Theme.BorderMuted,
+                Text = "",
+                AutoButtonColor = false,
+                LayoutOrder = idx
+            }, {
+                Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+                Utility.Create("UIStroke", { Color = Theme.Border, Thickness = 1 }),
+                Utility.Create("UIPadding", {
+                    PaddingLeft = UDim.new(0, 10),
+                    PaddingRight = UDim.new(0, 10)
+                }),
+                Utility.Create("TextLabel", {
+                    Name = "Label",
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = btnData.Text,
+                    TextColor3 = Theme.TextPrimary,
+                    TextSize = 11,
+                    Font = Theme.FontMedium
+                })
+            })
+            
+            local btnLabel = btn:FindFirstChild("Label")
+            
+            btn.MouseEnter:Connect(function()
+                if self.Window and self.Window.ActiveDialogue then return end
+                Utility.Tween(btn, { BackgroundColor3 = Theme.CardHover }, 0.15)
+            end)
+            btn.MouseLeave:Connect(function()
+                if self.Window and self.Window.ActiveDialogue then return end
+                Utility.Tween(btn, { BackgroundColor3 = Theme.BorderMuted }, 0.15)
+            end)
+            
+            btn.MouseButton1Click:Connect(function()
+                if self.Window and self.Window.ActiveDialogue then return end
+                if btnData.Callback then
+                    btnData.Callback(btn)
+                end
+            end)
+            
+            Utility.AddClickEffect(btn)
+        end
+    end
+    
+    return self
+end
+
+function Paragraph:Set(title, desc)
+    if title then
+        self.Title = title
+        if self.TitleLabel then
+            self.TitleLabel.Text = title
+        end
+    end
+    if desc then
+        self.Desc = desc
+        if self.DescLabel then
+            self.DescLabel.Text = desc
+        end
+    end
+end
+
+return Paragraph
 end
 
 -- MODULE: components/Slider
@@ -2421,6 +2723,11 @@ end
 function Tab:AddSection(text)
     local Label = require("components/Label")
     return Label.newSection(text, self.Page)
+end
+
+function Tab:AddParagraph(title, desc, options)
+    local Paragraph = require("components/Paragraph")
+    return Paragraph.new(title, desc, options, self.Page, self.Window)
 end
 
 return Tab
@@ -3232,6 +3539,55 @@ function Window:AddConfigTab()
     refreshConfigs()
     
     return configTab
+end
+
+function Window:AddAboutTab()
+    local aboutTab = self:AddTab("About", "info")
+    aboutTab:AddSection("Information")
+    
+    aboutTab:AddParagraph("Developer", "Fihz0 is the developer of this hub. For questions, suggestions, or support, you can contact me directly on Discord.")
+    
+    local statsParagraph = aboutTab:AddParagraph("Useful Hub Community", "Members: Loading... | Online: Loading...", {
+        Image = "https://i.ibb.co/67yYjfG6/Group-2.png",
+        Buttons = {
+            {
+                Text = "Copy Discord Link",
+                Callback = function(btn)
+                    Utility.SetClipboard("https://discord.gg/24fsRNH5K")
+                    local label = btn:FindFirstChild("Label")
+                    if label then
+                        local oldText = label.Text
+                        label.Text = "Copied!"
+                        task.delay(1.5, function()
+                            label.Text = oldText
+                        end)
+                    end
+                end
+            }
+        }
+    })
+    
+    -- Fetch Discord invite counts asynchronously
+    task.spawn(function()
+        local raw = Utility.HttpGet("https://discord.com/api/v9/invites/24fsRNH5K?with_counts=true")
+        if raw then
+            local HttpService = game:GetService("HttpService")
+            local success, data = pcall(function()
+                return HttpService:JSONDecode(raw)
+            end)
+            if success and data then
+                local members = data.approximate_member_count or "N/A"
+                local online = data.approximate_presence_count or "N/A"
+                statsParagraph:Set(nil, "Members: " .. tostring(members) .. " | Online: " .. tostring(online))
+            else
+                statsParagraph:Set(nil, "Members: 220+ | Discord Server Active")
+            end
+        else
+            statsParagraph:Set(nil, "Members: 220+ | Discord Server Active")
+        end
+    end)
+    
+    return aboutTab
 end
 
 return Window
@@ -10867,6 +11223,12 @@ function Library:SetTheme(themeTable)
             Theme[key] = val
         end
     end
+end
+
+-- Create the standard About tab on the window
+function Library:AddAboutTab(window)
+    if not window then return end
+    return window:AddAboutTab()
 end
 
 return Library
