@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 19:34:51
+	Generated at: 2026-07-06 20:26:05
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1290,21 +1290,19 @@ function Dropdown.new(text, parent, options, callback, window)
             Font = Theme.FontMedium,
             TextXAlignment = Enum.TextXAlignment.Left
         }),
-        -- Select Box Input on the right
         Utility.Create("TextButton", {
             Name = "SelectBox",
             Size = UDim2.new(0, 140, 0, 26),
             Position = UDim2.new(1, -155, 0.5, -13),
             BackgroundColor3 = Theme.BorderMuted,
-            BorderSizePixel = 0,
             Text = "",
             AutoButtonColor = false
         }, {
             Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
             Utility.Create("UIStroke", {
-                Name = "Stroke",
                 Color = Theme.Border,
-                Thickness = 1
+                Thickness = 1,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             }),
             -- Selected Value Label
             Utility.Create("TextLabel", {
@@ -1785,7 +1783,8 @@ function Keybind.new(text, parent, options, callback, window)
             Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
             Utility.Create("UIStroke", {
                 Color = Theme.Border,
-                Thickness = 1
+                Thickness = 1,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             }),
             -- Text inside Bind Button
             Utility.Create("TextLabel", {
@@ -2475,7 +2474,8 @@ function TextBox.new(text, parent, placeholder, options, callback, window)
             Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
             Utility.Create("UIStroke", {
                 Color = Theme.Border,
-                Thickness = 1
+                Thickness = 1,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             }),
             -- Actual TextBox
             Utility.Create("TextBox", {
