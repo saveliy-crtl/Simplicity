@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 00:40:06
+	Generated at: 2026-07-06 18:20:44
 	Simple, Beautiful, Proper
 ]=]
 
@@ -349,6 +349,23 @@ function Utility.AddClickEffect(button)
             end)
         end
     end)
+end
+
+-- Safely add native 2D drop shadow to a GUI object (using Roblox's native UIShadow API)
+function Utility.AddShadow(parent, options)
+    options = options or {}
+    local success, shadow = pcall(function()
+        local s = Instance.new("UIShadow")
+        s.BlurRadius = options.BlurRadius or UDim.new(0, 16)
+        s.Color = options.Color or Color3.fromRGB(0, 0, 0)
+        s.Offset = options.Offset or UDim2.new(0, 0, 0, 4)
+        s.Spread = options.Spread or UDim2.new(0, 0, 0, 0)
+        s.Transparency = options.Transparency or 0.55
+        s.Enabled = true
+        s.Parent = parent
+        return s
+    end)
+    return success and shadow or nil
 end
 
 return Utility
@@ -970,7 +987,7 @@ function Dialogue.new(title, window, size)
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
         ZIndex = 201,
-        ClipsDescendants = true
+        ClipsDescendants = false
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
@@ -1028,6 +1045,12 @@ function Dialogue.new(title, window, size)
             Position = UDim2.new(0, 0, 0, 32),
             BackgroundTransparency = 1
         })
+    })
+    
+    -- Dialogue popup native drop shadow
+    Utility.AddShadow(self.Frame, {
+        BlurRadius = UDim.new(0, 20),
+        Transparency = 0.5
     })
     
     self.Header = self.Frame:FindFirstChild("Header")
@@ -1094,11 +1117,12 @@ function Dropdown.new(text, parent, options, callback, window)
     
     self.Value = self.Default or (self.List[1] or "")
     self.Backdrop = nil
+    self.PopupContainer = nil
     self.Popup = nil
     
     local chevron = Lucide.GetAsset("chevron-down", 48)
     
-    -- Main Trigger Frame
+    -- Main Card Container (styled card frame)
     self.Frame = Utility.Create("Frame", {
         Name = "Dropdown_" .. self.Text,
         Parent = parent,
@@ -1112,32 +1136,51 @@ function Dropdown.new(text, parent, options, callback, window)
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         }),
-        -- Trigger Button
-        Utility.Create("TextButton", {
-            Name = "Trigger",
-            Size = UDim2.new(1, 0, 1, 0),
+        -- Label on the left
+        Utility.Create("TextLabel", {
+            Name = "Label",
+            Size = UDim2.new(1, -190, 1, 0),
+            Position = UDim2.new(0, 15, 0, 0),
             BackgroundTransparency = 1,
+            Text = self.Text,
+            TextColor3 = Theme.TextSecondary,
+            TextSize = 13,
+            Font = Theme.FontMedium,
+            TextXAlignment = Enum.TextXAlignment.Left
+        }),
+        -- Select Box Input on the right
+        Utility.Create("TextButton", {
+            Name = "SelectBox",
+            Size = UDim2.new(0, 150, 0, 26),
+            Position = UDim2.new(1, -165, 0.5, -13),
+            BackgroundColor3 = Theme.Background,
+            BorderSizePixel = 0,
             Text = "",
             AutoButtonColor = false
         }, {
-            -- Text Label
+            Utility.Create("UICorner", { CornerRadius = Theme.CornerRadiusSmall }),
+            Utility.Create("UIStroke", {
+                Name = "Stroke",
+                Color = Theme.Border,
+                Thickness = 1
+            }),
+            -- Selected Value Label
             Utility.Create("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -50, 1, 0),
-                Position = UDim2.new(0, 12, 0, 0),
+                Name = "ValueLabel",
+                Size = UDim2.new(1, -30, 1, 0),
+                Position = UDim2.new(0, 10, 0, 0),
                 BackgroundTransparency = 1,
-                Text = self.Text .. " : " .. tostring(self.Value),
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 13,
+                Text = tostring(self.Value),
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 12,
                 Font = Theme.FontMedium,
                 TextXAlignment = Enum.TextXAlignment.Left
             }),
-            -- Arrow Indicator (Lucide Chevron)
+            -- Chevron Arrow
             Utility.Create("ImageLabel", {
                 Name = "Arrow",
-                Size = UDim2.new(0, 14, 0, 14),
-                Position = UDim2.new(1, -20, 0.5, 0),
-                AnchorPoint = Vector2.new(0.5, 0.5),
+                Size = UDim2.new(0, 12, 0, 12),
+                Position = UDim2.new(1, -18, 0.5, -6),
                 BackgroundTransparency = 1,
                 Image = chevron.Url,
                 ImageRectSize = chevron.ImageRectSize,
@@ -1148,34 +1191,40 @@ function Dropdown.new(text, parent, options, callback, window)
         })
     })
     
-    self.Trigger = self.Frame:FindFirstChild("Trigger")
-    self.Label = self.Trigger:FindFirstChild("Label")
-    self.Arrow = self.Trigger:FindFirstChild("Arrow")
+    self.Label = self.Frame:FindFirstChild("Label")
+    self.SelectBox = self.Frame:FindFirstChild("SelectBox")
+    self.ValueLabel = self.SelectBox:FindFirstChild("ValueLabel")
+    self.Arrow = self.SelectBox:FindFirstChild("Arrow")
+    self.SelectStroke = self.SelectBox:FindFirstChild("Stroke")
     self.Stroke = self.Frame:FindFirstChildOfClass("UIStroke")
     
     -- Hover effect
-    self.Trigger.MouseEnter:Connect(function()
+    self.SelectBox.MouseEnter:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
+        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.CardHover }, 0.15)
+        Utility.Tween(self.SelectStroke, { Color = Theme.Accent }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextPrimary }, 0.15)
         Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextPrimary }, 0.15)
     end)
     
-    self.Trigger.MouseLeave:Connect(function()
+    self.SelectBox.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
+        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.Background }, 0.15)
+        Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
         Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextSecondary }, 0.15)
     end)
     
     -- Click toggle
-    self.Trigger.MouseButton1Click:Connect(function()
-        if self.Popup then
+    self.SelectBox.MouseButton1Click:Connect(function()
+        if self.PopupContainer then
             self:ClosePopup()
         else
             self:OpenPopup()
         end
     end)
     
-    Utility.AddClickEffect(self.Frame)
+    Utility.AddClickEffect(self.SelectBox)
     
     -- Register Flag
     if self.Flag and self.Window then
@@ -1193,7 +1242,7 @@ function Dropdown.new(text, parent, options, callback, window)
 end
 
 function Dropdown:OpenPopup()
-    if self.Popup then return end
+    if self.PopupContainer then return end
     
     -- Close any other open dropdown in this window
     if self.Window and self.Window.OpenDropdown and self.Window.OpenDropdown ~= self then
@@ -1203,9 +1252,23 @@ function Dropdown:OpenPopup()
         self.Window.OpenDropdown = self
     end
     
-    -- Fixed popup size (160px width, 220px height)
-    local targetWidth = 160
-    local popupHeight = 220
+    -- Align width to select box (150px)
+    local targetWidth = 150
+    local popupHeight = 200
+    
+    -- Calculate positioning relative to self.Window.Container
+    local triggerPos = self.SelectBox.AbsolutePosition
+    local containerPos = self.Window.Container.AbsolutePosition
+    local scale = self.Window.UIScale.Scale
+    
+    local relX = (triggerPos.X - containerPos.X) / scale
+    local relY = (triggerPos.Y - containerPos.Y) / scale
+    
+    -- Smart flip logic if popup overflows window bottom
+    local popupY = relY + 28
+    if relY + 28 + popupHeight > 375 then
+        popupY = relY - popupHeight - 2
+    end
     
     -- Backdrop on ScreenGui for click-outside detection
     self.Backdrop = Utility.Create("TextButton", {
@@ -1215,7 +1278,7 @@ function Dropdown:OpenPopup()
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
         Text = "",
-        ZIndex = 99999, -- Float above absolutely everything
+        ZIndex = 99999,
         Active = true
     })
     
@@ -1223,15 +1286,33 @@ function Dropdown:OpenPopup()
         self:ClosePopup()
     end)
     
-    -- Popup Panel parented to self.Window.Container (enables auto-move/scale, bypassing clipping)
-    self.Popup = Utility.Create("Frame", {
-        Name = "DropdownPopup",
+    -- Popup Container parented to self.Window.Container (enables scaling and placement without clipping)
+    self.PopupContainer = Utility.Create("Frame", {
+        Name = "DropdownPopupContainer",
         Parent = self.Window.Container,
         Size = UDim2.new(0, targetWidth, 0, 0), -- Starts at height 0 for opening zoom
-        Position = UDim2.new(1, 10, 0, 45), -- Floats exactly on the right of the window body
+        Position = UDim2.new(0, relX, 0, popupY),
+        BackgroundTransparency = 1,
+        ZIndex = 100,
+        ClipsDescendants = false -- Allows shadow to overflow cleanly
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius })
+    })
+    
+    -- Add drop shadow using native UIShadow API
+    Utility.AddShadow(self.PopupContainer, {
+        BlurRadius = UDim.new(0, 12),
+        Transparency = 0.6
+    })
+    
+    -- Inner Visual Popup frame (clips descendants so content animates size cleanly)
+    self.Popup = Utility.Create("Frame", {
+        Name = "DropdownPopup",
+        Parent = self.PopupContainer,
+        Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
-        ZIndex = 100, -- Renders above the main window
+        ZIndex = 101,
         ClipsDescendants = true
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
@@ -1242,15 +1323,15 @@ function Dropdown:OpenPopup()
         })
     })
     
-    -- Search Input Container (Drag handle / input)
+    -- Search Input Container
     local searchContainer = Utility.Create("Frame", {
         Name = "SearchContainer",
         Parent = self.Popup,
-        Size = UDim2.new(1, -20, 0, 32),
-        Position = UDim2.new(0, 10, 0, 10),
+        Size = UDim2.new(1, -20, 0, 28),
+        Position = UDim2.new(0, 10, 0, 8),
         BackgroundColor3 = Theme.Background,
         BorderSizePixel = 0,
-        ZIndex = 101
+        ZIndex = 102
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
         Utility.Create("UIStroke", {
@@ -1263,58 +1344,54 @@ function Dropdown:OpenPopup()
     local searchIcon = Utility.Create("ImageLabel", {
         Name = "SearchIcon",
         Parent = searchContainer,
-        Size = UDim2.new(0, 12, 0, 12),
-        Position = UDim2.new(0, 10, 0.5, -6),
+        Size = UDim2.new(0, 10, 0, 10),
+        Position = UDim2.new(0, 8, 0.5, -5),
         BackgroundTransparency = 1,
         Image = searchIconAsset.Url,
         ImageRectSize = searchIconAsset.ImageRectSize,
         ImageRectOffset = searchIconAsset.ImageRectOffset,
         ImageColor3 = Theme.TextSecondary,
-        ZIndex = 102
+        ZIndex = 103
     })
     
     local searchBox = Utility.Create("TextBox", {
         Name = "SearchBox",
         Parent = searchContainer,
-        Size = UDim2.new(1, -38, 1, 0),
-        Position = UDim2.new(0, 30, 0, 0),
+        Size = UDim2.new(1, -32, 1, 0),
+        Position = UDim2.new(0, 24, 0, 0),
         BackgroundTransparency = 1,
         Text = "",
         PlaceholderText = "Search...",
         PlaceholderColor3 = Theme.TextMuted,
         TextColor3 = Theme.TextPrimary,
-        TextSize = 13,
+        TextSize = 12,
         Font = Theme.FontMedium,
         TextXAlignment = Enum.TextXAlignment.Left,
         ClearTextOnFocus = false,
-        ZIndex = 102
+        ZIndex = 103
     })
-    
-    -- Make the popup draggable by its background and search container
-    Utility.MakeDraggable(self.Popup, self.Popup)
-    Utility.MakeDraggable(self.Popup, searchContainer)
     
     -- Scrolling frame for options
     local optionsContainer = Utility.Create("ScrollingFrame", {
         Name = "OptionsContainer",
         Parent = self.Popup,
-        Size = UDim2.new(1, 0, 1, -52),
-        Position = UDim2.new(0, 0, 0, 52),
+        Size = UDim2.new(1, 0, 1, -44),
+        Position = UDim2.new(0, 0, 0, 44),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 2,
         ScrollBarImageColor3 = Theme.Border,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0, 0, 0, 0),
-        ZIndex = 101
+        ZIndex = 102
     }, {
         Utility.Create("UIListLayout", {
-            Padding = UDim.new(0, 5),
+            Padding = UDim.new(0, 4),
             SortOrder = Enum.SortOrder.LayoutOrder
         }),
         Utility.Create("UIPadding", {
             PaddingTop = UDim.new(0, 4),
-            PaddingBottom = UDim.new(0, 8),
+            PaddingBottom = UDim.new(0, 6),
             PaddingLeft = UDim.new(0, 10),
             PaddingRight = UDim.new(0, 10)
         })
@@ -1343,26 +1420,26 @@ function Dropdown:OpenPopup()
                 local optionBtn = Utility.Create("TextButton", {
                     Name = "Option_" .. optStr,
                     Parent = optionsContainer,
-                    Size = UDim2.new(1, 0, 0, 30),
+                    Size = UDim2.new(1, 0, 0, 26),
                     BackgroundColor3 = Theme.Card,
                     BackgroundTransparency = 1,
                     Text = "",
                     AutoButtonColor = false,
                     LayoutOrder = index,
-                    ZIndex = 102
+                    ZIndex = 103
                 }, {
-                    Utility.Create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                    Utility.Create("UICorner", { CornerRadius = UDim.new(0, 4) }),
                     Utility.Create("TextLabel", {
                         Name = "OptionLabel",
-                        Size = UDim2.new(1, -20, 1, 0),
-                        Position = UDim2.new(0, 12, 0, 0),
+                        Size = UDim2.new(1, -16, 1, 0),
+                        Position = UDim2.new(0, 8, 0, 0),
                         BackgroundTransparency = 1,
                         Text = optStr,
                         TextColor3 = isSelected and Theme.Accent or Theme.TextSecondary,
-                        TextSize = 13,
+                        TextSize = 12,
                         Font = Theme.FontMedium,
                         TextXAlignment = Enum.TextXAlignment.Left,
-                        ZIndex = 103
+                        ZIndex = 104
                     })
                 })
                 
@@ -1393,7 +1470,7 @@ function Dropdown:OpenPopup()
         task.spawn(function()
             task.wait()
             if optionsContainer and uiListLayout then
-                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 12)
+                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 10)
             end
         end)
     end
@@ -1406,15 +1483,15 @@ function Dropdown:OpenPopup()
     -- Populate default list
     populateOptions()
     
-    -- Open animation
+    -- Open animation (tween height of container from 0 to target size)
     Utility.Tween(self.Arrow, { Rotation = 180 }, 0.15)
-    Utility.Tween(self.Popup, { Size = UDim2.new(0, targetWidth, 0, popupHeight) }, 0.15)
+    Utility.Tween(self.PopupContainer, { Size = UDim2.new(0, targetWidth, 0, popupHeight) }, 0.15)
 end
 
 function Dropdown:ClosePopup()
-    if not self.Popup then return end
+    if not self.PopupContainer then return end
     
-    local targetWidth = 160
+    local targetWidth = 150
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
@@ -1422,16 +1499,18 @@ function Dropdown:ClosePopup()
     
     -- Close animation
     Utility.Tween(self.Arrow, { Rotation = 0 }, 0.1)
-    local tween = Utility.Tween(self.Popup, { Size = UDim2.new(0, targetWidth, 0, 0) }, 0.1)
+    local tween = Utility.Tween(self.PopupContainer, { Size = UDim2.new(0, targetWidth, 0, 0) }, 0.1)
     
     local currentBackdrop = self.Backdrop
-    local currentPopup = self.Popup
+    local currentContainer = self.PopupContainer
+    
     self.Backdrop = nil
+    self.PopupContainer = nil
     self.Popup = nil
     
     tween.Completed:Connect(function()
         if currentBackdrop then currentBackdrop:Destroy() end
-        if currentPopup then currentPopup:Destroy() end
+        if currentContainer then currentContainer:Destroy() end
     end)
 end
 
@@ -1443,10 +1522,10 @@ function Dropdown:Set(val, force)
         self.Window.Flags[self.Flag] = val
     end
     
-    self.Label.Text = self.Text .. " : " .. tostring(val)
+    self.ValueLabel.Text = tostring(val)
     
     -- If popup is open, we can update highlights
-    if self.Popup then
+    if self.PopupContainer then
         local optionsContainer = self.Popup:FindFirstChild("OptionsContainer")
         if optionsContainer then
             for _, child in ipairs(optionsContainer:GetChildren()) do
@@ -1483,7 +1562,7 @@ function Dropdown:Refresh(newList, selectFirst)
     end
     
     -- If open, close popup to force reload next time
-    if self.Popup then
+    if self.PopupContainer then
         self:ClosePopup()
     end
 end
@@ -2485,7 +2564,7 @@ function Window.new(title, configFolder)
         ResetOnSpawn = false
     })
     
-    -- Centered pivot container for scaling & positioning
+    -- Centered pivot container for scaling & positioning (with UICorner so shadow is rounded)
     self.Container = Utility.Create("Frame", {
         Name = "WindowContainer",
         Parent = self.ScreenGui,
@@ -2493,6 +2572,14 @@ function Window.new(title, configFolder)
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius })
+    })
+    
+    -- Main Window native drop shadow
+    Utility.AddShadow(self.Container, {
+        BlurRadius = UDim.new(0, 24),
+        Transparency = 0.5
     })
     
     -- Main Frame (styled window)
