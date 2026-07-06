@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 19:25:56
+	Generated at: 2026-07-06 19:34:51
 	Simple, Beautiful, Proper
 ]=]
 
@@ -149,12 +149,13 @@ function Utility.Create(className, properties, children)
 end
 
 -- Make GUI Draggable (Smooth and responsive)
-function Utility.MakeDraggable(frame, dragHandle)
+function Utility.MakeDraggable(frame, dragHandle, blockCondition)
     local dragging = false
     local dragStart
     local startPosition
 
     dragHandle.InputBegan:Connect(function(input)
+        if blockCondition and blockCondition() then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
@@ -379,11 +380,12 @@ local Lucide = require("packages/lucide-roblox")
 local Button = {}
 Button.__index = Button
 
-function Button.new(text, parent, callback, icon)
+function Button.new(text, parent, callback, icon, window)
     local self = setmetatable({}, Button)
     
     self.Text = text or "Button"
     self.Callback = callback or function() end
+    self.Window = window
     
     local hasIcon = false
     local iconAsset
@@ -468,18 +470,22 @@ function Button.new(text, parent, callback, icon)
     
     -- Interaction animations
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
     self.Frame.MouseButton1Down:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Accent }, 0.05)
     end)
     
     self.Frame.MouseButton1Up:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.1)
         
         -- Run callback safely in new thread
@@ -599,17 +605,20 @@ function Colorpicker.new(text, parent, options, callback, window)
     
     -- Hover effect on Card
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextPrimary }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
     end)
     
     -- Click to Open Colorpicker Dialogue Panel
     self.PreviewBtn.MouseButton1Click:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         self:OpenDialogue()
     end)
     
@@ -1062,6 +1071,8 @@ function Dialogue.new(title, window, size)
     self.Size = size or UDim2.new(0, 240, 0, 200)
     self.Title = title or "Dialogue"
     
+    self.Window.ActiveDialogue = self
+    
     -- Dialogue Backdrop parented to self.Window.Container (blackout covers ONLY the window!)
     self.Backdrop = Utility.Create("Frame", { -- Using Frame to prevent button-drag release gotchas in Roblox
         Name = "DialogueBackdrop",
@@ -1211,6 +1222,10 @@ function Dialogue.new(title, window, size)
 end
 
 function Dialogue:Close()
+    if self.Window and self.Window.ActiveDialogue == self then
+        self.Window.ActiveDialogue = nil
+    end
+    
     local closeTween = Utility.Tween(self.UIScale, { Scale = 0 }, 0.15)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 1 }, 0.15)
     
@@ -1327,23 +1342,20 @@ function Dropdown.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
-        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.CardHover }, 0.15)
-        Utility.Tween(self.SelectStroke, { Color = Theme.Accent }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextPrimary }, 0.15)
-        Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextPrimary }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
-        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.BorderMuted }, 0.15)
-        Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
-        Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextSecondary }, 0.15)
     end)
     
     -- Click toggle
     self.SelectBox.MouseButton1Click:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         if self.PopupContainer then
             self:ClosePopup()
         else
@@ -1391,11 +1403,8 @@ function Dropdown:OpenPopup()
     local relX = (triggerPos.X - containerPos.X) / scale
     local relY = (triggerPos.Y - containerPos.Y) / scale
     
-    -- Smart flip logic if popup overflows window bottom (offset slightly lower)
-    local popupY = relY + 30
-    if relY + 30 + popupHeight > 375 then
-        popupY = relY - popupHeight - 4
-    end
+    -- Dropdown always appears below the selector
+    local popupY = relY + 28
     
     -- Backdrop on ScreenGui for click-outside detection
     self.Backdrop = Utility.Create("TextButton", {
@@ -1417,14 +1426,21 @@ function Dropdown:OpenPopup()
     self.PopupContainer = Utility.Create("Frame", {
         Name = "DropdownPopupContainer",
         Parent = self.Window.Container,
-        Size = UDim2.new(0, targetWidth, 0, 0), -- Starts at height 0 for opening zoom
-        Position = UDim2.new(0, relX, 0, popupY),
+        Size = UDim2.new(0, targetWidth, 0, popupHeight),
+        Position = UDim2.new(0, relX + 70, 0, popupY), -- Centered at X offset
+        AnchorPoint = Vector2.new(0.5, 0), -- Scaled from center-top
         BackgroundTransparency = 1,
         ZIndex = 100,
-        ClipsDescendants = false -- Allows shadow to overflow cleanly
+        ClipsDescendants = false
     }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius })
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+        Utility.Create("UIScale", {
+            Name = "UIScale",
+            Scale = 0
+        })
     })
+    
+    self.UIScale = self.PopupContainer:FindFirstChild("UIScale")
     
     -- Add drop shadow using native UIShadow API
     Utility.AddShadow(self.PopupContainer, {
@@ -1610,15 +1626,14 @@ function Dropdown:OpenPopup()
     -- Populate default list
     populateOptions()
     
-    -- Open animation (tween height of container from 0 to target size)
+    -- Open animation
     Utility.Tween(self.Arrow, { Rotation = 180 }, 0.15)
-    Utility.Tween(self.PopupContainer, { Size = UDim2.new(0, targetWidth, 0, popupHeight) }, 0.15)
+    Utility.Tween(self.SelectStroke, { Color = Theme.Accent }, 0.15)
+    Utility.Tween(self.UIScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Back)
 end
 
 function Dropdown:ClosePopup()
     if not self.PopupContainer then return end
-    
-    local targetWidth = 140
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
@@ -1626,7 +1641,8 @@ function Dropdown:ClosePopup()
     
     -- Close animation
     Utility.Tween(self.Arrow, { Rotation = 0 }, 0.1)
-    local tween = Utility.Tween(self.PopupContainer, { Size = UDim2.new(0, targetWidth, 0, 0) }, 0.1)
+    Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.1)
+    local tween = Utility.Tween(self.UIScale, { Scale = 0 }, 0.15)
     
     local currentBackdrop = self.Backdrop
     local currentContainer = self.PopupContainer
@@ -1634,6 +1650,7 @@ function Dropdown:ClosePopup()
     self.Backdrop = nil
     self.PopupContainer = nil
     self.Popup = nil
+    self.UIScale = nil
     
     tween.Completed:Connect(function()
         if currentBackdrop then currentBackdrop:Destroy() end
@@ -1759,8 +1776,8 @@ function Keybind.new(text, parent, options, callback, window)
         -- Bind Button (Right)
         Utility.Create("TextButton", {
             Name = "BindButton",
-            Size = UDim2.new(0, 80, 0, 26),
-            Position = UDim2.new(1, -95, 0.5, -13),
+            Size = UDim2.new(0, 140, 0, 26),
+            Position = UDim2.new(1, -155, 0.5, -13),
             BackgroundColor3 = Theme.BorderMuted,
             Text = "",
             AutoButtonColor = false
@@ -1791,15 +1808,18 @@ function Keybind.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
     -- Binding Trigger Click
     self.BindButton.MouseButton1Click:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         self:StartBinding()
     end)
     
@@ -2096,10 +2116,12 @@ function Slider.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2119,6 +2141,7 @@ function Slider.new(text, parent, options, callback, window)
     end
     
     self.Track.InputBegan:Connect(function(input)
+        if self.Window and self.Window.ActiveDialogue then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.Dragging = true
             updateValue(input)
@@ -2290,6 +2313,7 @@ function Tab.new(name, window, icon)
     
     -- Button Logic
     self.Button.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         if not self.Active then
             Utility.Tween(self.Button:FindFirstChild("Label"), { TextColor3 = Theme.TextPrimary }, 0.15)
             if self.Icon then
@@ -2300,6 +2324,7 @@ function Tab.new(name, window, icon)
     end)
     
     self.Button.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         if not self.Active then
             Utility.Tween(self.Button:FindFirstChild("Label"), { TextColor3 = Theme.TextSecondary }, 0.15)
             if self.Icon then
@@ -2310,6 +2335,7 @@ function Tab.new(name, window, icon)
     end)
     
     self.Button.MouseButton1Click:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         self.Window:SelectTab(self.Name)
     end)
     
@@ -2347,7 +2373,7 @@ end
 -- Component wrappers
 function Tab:AddButton(text, callback, icon)
     local Button = require("components/Button")
-    return Button.new(text, self.Page, callback, icon)
+    return Button.new(text, self.Page, callback, icon, self.Window)
 end
 
 function Tab:AddToggle(text, options, callback)
@@ -2476,6 +2502,10 @@ function TextBox.new(text, parent, placeholder, options, callback, window)
     
     -- Focus effects
     self.Input.Focused:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then
+            self.Input:ReleaseFocus()
+            return
+        end
         Utility.Tween(self.InputStroke, { Color = Theme.Accent }, 0.15)
     end)
     
@@ -2486,10 +2516,12 @@ function TextBox.new(text, parent, placeholder, options, callback, window)
     
     -- Main frame hover effects
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2604,15 +2636,18 @@ function Toggle.new(text, parent, options, callback, window)
     
     -- Hover effect
     self.Frame.MouseEnter:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
     end)
     
     self.Frame.MouseLeave:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
     -- Click toggle
     self.Frame.MouseButton1Click:Connect(function()
+        if self.Window and self.Window.ActiveDialogue then return end
         self:Set(not self.Value)
     end)
     
@@ -2932,39 +2967,47 @@ function Window.new(title, configFolder)
         BackgroundTransparency = 1
     })
     
-    -- Make window draggable via Header
-    Utility.MakeDraggable(self.Container, self.Header)
+    -- Make window draggable via Header (blocked if dialogue is active)
+    Utility.MakeDraggable(self.Container, self.Header, function()
+        return self.ActiveDialogue ~= nil
+    end)
     
     -- Button Connections
     self.MinimizeButton.MouseEnter:Connect(function()
+        if self.ActiveDialogue then return end
         local icon = self.MinimizeButton:FindFirstChild("Icon")
         if icon then
             Utility.Tween(icon, { ImageColor3 = Theme.Accent }, 0.15)
         end
     end)
     self.MinimizeButton.MouseLeave:Connect(function()
+        if self.ActiveDialogue then return end
         local icon = self.MinimizeButton:FindFirstChild("Icon")
         if icon then
             Utility.Tween(icon, { ImageColor3 = Theme.TextSecondary }, 0.15)
         end
     end)
     self.MinimizeButton.MouseButton1Click:Connect(function()
+        if self.ActiveDialogue then return end
         self:ToggleMinimize()
     end)
     
     self.CloseButton.MouseEnter:Connect(function()
+        if self.ActiveDialogue then return end
         local icon = self.CloseButton:FindFirstChild("Icon")
         if icon then
             Utility.Tween(icon, { ImageColor3 = Theme.Failure }, 0.15)
         end
     end)
     self.CloseButton.MouseLeave:Connect(function()
+        if self.ActiveDialogue then return end
         local icon = self.CloseButton:FindFirstChild("Icon")
         if icon then
             Utility.Tween(icon, { ImageColor3 = Theme.TextSecondary }, 0.15)
         end
     end)
     self.CloseButton.MouseButton1Click:Connect(function()
+        if self.ActiveDialogue then return end
         self:Close()
     end)
     
