@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 18:20:44
+	Generated at: 2026-07-06 18:34:33
 	Simple, Beautiful, Proper
 ]=]
 
@@ -977,28 +977,45 @@ function Dialogue.new(title, window, size)
         self:Close()
     end)
     
-    -- Dialogue Body (Centered in the window, parented to the Backdrop)
-    self.Frame = Utility.Create("Frame", {
-        Name = "DialogueFrame",
+    -- Dialogue Body Container (handles scaling, positioning, shadow, no clipping)
+    self.FrameContainer = Utility.Create("Frame", {
+        Name = "DialogueFrameContainer",
         Parent = self.Backdrop,
         Size = self.Size,
         Position = UDim2.new(0, centerX, 0, centerY),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Theme.Header,
-        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
         ZIndex = 201,
         ClipsDescendants = false
+    }, {
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+        Utility.Create("UIScale", {
+            Name = "UIScale",
+            Scale = scale
+        })
+    })
+    
+    -- Add shadow using native UIShadow API
+    Utility.AddShadow(self.FrameContainer, {
+        BlurRadius = UDim.new(0, 20),
+        Transparency = 0.5
+    })
+    
+    -- Dialogue Body Frame (styled visual frame, clips descendants so contents don't overflow during zoom!)
+    self.Frame = Utility.Create("Frame", {
+        Name = "DialogueFrame",
+        Parent = self.FrameContainer,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.Header,
+        BorderSizePixel = 0,
+        ZIndex = 202,
+        ClipsDescendants = true
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
             Color = Theme.Border,
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        }),
-        -- Reapply window's UIScale directly to the dialogue frame so its size scales identically
-        Utility.Create("UIScale", {
-            Name = "UIScale",
-            Scale = scale
         }),
         -- Header Bar
         Utility.Create("Frame", {
@@ -1047,12 +1064,6 @@ function Dialogue.new(title, window, size)
         })
     })
     
-    -- Dialogue popup native drop shadow
-    Utility.AddShadow(self.Frame, {
-        BlurRadius = UDim.new(0, 20),
-        Transparency = 0.5
-    })
-    
     self.Header = self.Frame:FindFirstChild("Header")
     self.Content = self.Frame:FindFirstChild("Content")
     self.CloseBtn = self.Header:FindFirstChild("Close")
@@ -1077,14 +1088,14 @@ function Dialogue.new(title, window, size)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 0.65 }, 0.2)
     
     -- Pop zoom effect starting from center
-    self.Frame.Size = UDim2.new(0, 0, 0, 0)
-    Utility.Tween(self.Frame, { Size = self.Size }, 0.2, Enum.EasingStyle.Back)
+    self.FrameContainer.Size = UDim2.new(0, 0, 0, 0)
+    Utility.Tween(self.FrameContainer, { Size = self.Size }, 0.2, Enum.EasingStyle.Back)
     
     return self
 end
 
 function Dialogue:Close()
-    local closeTween = Utility.Tween(self.Frame, { Size = UDim2.new(0, 0, 0, 0) }, 0.15)
+    local closeTween = Utility.Tween(self.FrameContainer, { Size = UDim2.new(0, 0, 0, 0) }, 0.15)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 1 }, 0.15)
     
     closeTween.Completed:Connect(function()
@@ -1139,21 +1150,21 @@ function Dropdown.new(text, parent, options, callback, window)
         -- Label on the left
         Utility.Create("TextLabel", {
             Name = "Label",
-            Size = UDim2.new(1, -190, 1, 0),
+            Size = UDim2.new(1, -170, 1, 0),
             Position = UDim2.new(0, 15, 0, 0),
             BackgroundTransparency = 1,
             Text = self.Text,
             TextColor3 = Theme.TextSecondary,
-            TextSize = 13,
+            TextSize = 14,
             Font = Theme.FontMedium,
             TextXAlignment = Enum.TextXAlignment.Left
         }),
         -- Select Box Input on the right
         Utility.Create("TextButton", {
             Name = "SelectBox",
-            Size = UDim2.new(0, 150, 0, 26),
-            Position = UDim2.new(1, -165, 0.5, -13),
-            BackgroundColor3 = Theme.Background,
+            Size = UDim2.new(0, 140, 0, 26),
+            Position = UDim2.new(1, -155, 0.5, -13),
+            BackgroundColor3 = Theme.BorderMuted,
             BorderSizePixel = 0,
             Text = "",
             AutoButtonColor = false
@@ -1209,7 +1220,7 @@ function Dropdown.new(text, parent, options, callback, window)
     
     self.SelectBox.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
-        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.Background }, 0.15)
+        Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.BorderMuted }, 0.15)
         Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
         Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextSecondary }, 0.15)
@@ -1252,8 +1263,8 @@ function Dropdown:OpenPopup()
         self.Window.OpenDropdown = self
     end
     
-    -- Align width to select box (150px)
-    local targetWidth = 150
+    -- Align width to select box (140px)
+    local targetWidth = 140
     local popupHeight = 200
     
     -- Calculate positioning relative to self.Window.Container
@@ -1264,10 +1275,10 @@ function Dropdown:OpenPopup()
     local relX = (triggerPos.X - containerPos.X) / scale
     local relY = (triggerPos.Y - containerPos.Y) / scale
     
-    -- Smart flip logic if popup overflows window bottom
-    local popupY = relY + 28
-    if relY + 28 + popupHeight > 375 then
-        popupY = relY - popupHeight - 2
+    -- Smart flip logic if popup overflows window bottom (offset slightly lower)
+    local popupY = relY + 30
+    if relY + 30 + popupHeight > 375 then
+        popupY = relY - popupHeight - 4
     end
     
     -- Backdrop on ScreenGui for click-outside detection
@@ -1491,7 +1502,7 @@ end
 function Dropdown:ClosePopup()
     if not self.PopupContainer then return end
     
-    local targetWidth = 150
+    local targetWidth = 140
     
     if self.Window and self.Window.OpenDropdown == self then
         self.Window.OpenDropdown = nil
