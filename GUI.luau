@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 19:22:46
+	Generated at: 2026-07-06 19:23:51
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1326,7 +1326,7 @@ function Dropdown.new(text, parent, options, callback, window)
     self.Stroke = self.Frame:FindFirstChildOfClass("UIStroke")
     
     -- Hover effect
-    self.SelectBox.MouseEnter:Connect(function()
+    self.Frame.MouseEnter:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.CardHover }, 0.15)
         Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.CardHover }, 0.15)
         Utility.Tween(self.SelectStroke, { Color = Theme.Accent }, 0.15)
@@ -1334,7 +1334,7 @@ function Dropdown.new(text, parent, options, callback, window)
         Utility.Tween(self.Arrow, { ImageColor3 = Theme.TextPrimary }, 0.15)
     end)
     
-    self.SelectBox.MouseLeave:Connect(function()
+    self.Frame.MouseLeave:Connect(function()
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
         Utility.Tween(self.SelectBox, { BackgroundColor3 = Theme.BorderMuted }, 0.15)
         Utility.Tween(self.SelectStroke, { Color = Theme.Border }, 0.15)
