@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 21:13:22
+	Generated at: 2026-07-06 21:18:08
 	Simple, Beautiful, Proper
 ]=]
 
@@ -475,7 +475,6 @@ function Button.new(text, parent, callback, icon, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -611,7 +610,6 @@ function Colorpicker.new(text, parent, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
     end)
@@ -1153,8 +1151,18 @@ function Dialogue.new(title, window, size)
             Name = "Header",
             Size = UDim2.new(1, 0, 0, 32),
             BackgroundColor3 = Theme.Background,
-            BorderSizePixel = 0
+            BorderSizePixel = 0,
+            ZIndex = 203
         }, {
+            Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
+            Utility.Create("Frame", {
+                Name = "Overlap",
+                Size = UDim2.new(1, 0, 0, 16),
+                Position = UDim2.new(0, 0, 0, 16),
+                BackgroundColor3 = Theme.Background,
+                BorderSizePixel = 0,
+                ZIndex = 1
+            }),
             Utility.Create("TextLabel", {
                 Name = "Title",
                 Size = UDim2.new(1, -40, 1, 0),
@@ -1164,7 +1172,8 @@ function Dialogue.new(title, window, size)
                 TextColor3 = Theme.TextPrimary,
                 TextSize = 13,
                 Font = Theme.FontSemibold,
-                TextXAlignment = Enum.TextXAlignment.Left
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 2
             }),
             -- Close Button
             Utility.Create("TextButton", {
@@ -1172,7 +1181,8 @@ function Dialogue.new(title, window, size)
                 Size = UDim2.new(0, 24, 0, 24),
                 Position = UDim2.new(1, -28, 0.5, -12),
                 BackgroundTransparency = 1,
-                Text = ""
+                Text = "",
+                ZIndex = 2
             }, {
                 Utility.Create("ImageLabel", {
                     Name = "Icon",
@@ -1182,7 +1192,8 @@ function Dialogue.new(title, window, size)
                     Image = Lucide.GetAsset("x", 48).Url,
                     ImageRectSize = Lucide.GetAsset("x", 48).ImageRectSize,
                     ImageRectOffset = Lucide.GetAsset("x", 48).ImageRectOffset,
-                    ImageColor3 = Theme.TextSecondary
+                    ImageColor3 = Theme.TextSecondary,
+                    ZIndex = 3
                 })
             })
         }),
@@ -1346,7 +1357,6 @@ function Dropdown.new(text, parent, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
         Utility.Tween(self.Label, { TextColor3 = Theme.TextSecondary }, 0.15)
     end)
@@ -1812,7 +1822,6 @@ function Keybind.new(text, parent, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2120,7 +2129,6 @@ function Slider.new(text, parent, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2521,7 +2529,6 @@ function TextBox.new(text, parent, placeholder, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
@@ -2641,7 +2648,6 @@ function Toggle.new(text, parent, options, callback, window)
     end)
     
     self.Frame.MouseLeave:Connect(function()
-        if self.Window and self.Window.ActiveDialogue then return end
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
