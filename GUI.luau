@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 21:05:52
+	Generated at: 2026-07-06 21:13:22
 	Simple, Beautiful, Proper
 ]=]
 
@@ -3189,6 +3189,9 @@ function Window:AddConfigTab()
     
     local function refreshConfigs()
         configList = self:GetConfigs()
+        if #configList == 0 then
+            configList = {"Nothing here yet..."}
+        end
         if configDropdown then
             configDropdown:Refresh(configList, false)
         end
@@ -3198,20 +3201,20 @@ function Window:AddConfigTab()
         list = configList,
         default = ""
     }, function(selected)
-        if selected and selected ~= "" then
+        if selected and selected ~= "" and selected ~= "Nothing here yet..." then
             configName = selected
             configInput:Set(selected)
         end
     end)
     
     configTab:AddButton("Save Config", function()
-        if configName == "" then return end
+        if configName == "" or configName == "Nothing here yet..." then return end
         self:SaveConfig(configName)
         refreshConfigs()
     end)
     
     configTab:AddButton("Load Config", function()
-        if configName == "" then return end
+        if configName == "" or configName == "Nothing here yet..." then return end
         self:LoadConfig(configName)
     end)
     
