@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 19:23:51
+	Generated at: 2026-07-06 19:25:56
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1322,7 +1322,7 @@ function Dropdown.new(text, parent, options, callback, window)
     self.SelectBox = self.Frame:FindFirstChild("SelectBox")
     self.ValueLabel = self.SelectBox:FindFirstChild("ValueLabel")
     self.Arrow = self.SelectBox:FindFirstChild("Arrow")
-    self.SelectStroke = self.SelectBox:FindFirstChild("Stroke")
+    self.SelectStroke = self.SelectBox:FindFirstChildOfClass("UIStroke")
     self.Stroke = self.Frame:FindFirstChildOfClass("UIStroke")
     
     -- Hover effect
