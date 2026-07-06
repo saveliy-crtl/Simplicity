@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 22:10:02
+	Generated at: 2026-07-06 23:13:41
 	Simple, Beautiful, Proper
 ]=]
 
@@ -390,7 +390,7 @@ function Utility.GetCustomAsset(url)
     end
     
     local success, asset = pcall(function()
-        local filename = "usefulhub_assets/" .. string.match(url, "([^/]+)$")
+        local filename = "uselesshub_assets/" .. string.match(url, "([^/]+)$")
         if not string.find(filename, "%%.") then
             filename = filename .. ".png"
         end
@@ -404,8 +404,8 @@ function Utility.GetCustomAsset(url)
         if not fileExists then
             -- Create assets folder if not exists
             pcall(function()
-                if isfolder and not isfolder("usefulhub_assets") then
-                    makefolder("usefulhub_assets")
+                if isfolder and not isfolder("uselesshub_assets") then
+                    makefolder("uselesshub_assets")
                 end
             end)
             
@@ -563,6 +563,14 @@ function Button.new(text, parent, callback, icon, window)
     Utility.AddClickEffect(self.Frame)
     
     return self
+end
+
+function Button:Set(text)
+    self.Text = text
+    local label = self.Frame:FindFirstChild("Label") or (self.Frame:FindFirstChild("Content") and self.Frame.Content:FindFirstChild("Label"))
+    if label then
+        label.Text = text
+    end
 end
 
 return Button
@@ -1599,6 +1607,19 @@ function Dropdown:OpenPopup()
         ClearTextOnFocus = false,
         ZIndex = 103
     })
+    
+    -- Workaround for Roblox CanvasGroup TextBox focus propagation bug
+    searchContainer.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            searchBox:CaptureFocus()
+        end
+    end)
+    
+    searchBox.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            searchBox:CaptureFocus()
+        end
+    end)
     
     -- Scrolling frame for options
     local optionsContainer = Utility.Create("ScrollingFrame", {
@@ -3547,25 +3568,18 @@ function Window:AddAboutTab()
     
     aboutTab:AddParagraph("Developer", "Fihz0 is the developer of this hub. For questions, suggestions, or support, you can contact me directly on Discord.")
     
-    local statsParagraph = aboutTab:AddParagraph("Useful Hub Community", "Members: Loading... | Online: Loading...", {
-        Image = "https://i.ibb.co/67yYjfG6/Group-2.png",
-        Buttons = {
-            {
-                Text = "Copy Discord Link",
-                Callback = function(btn)
-                    Utility.SetClipboard("https://discord.gg/24fsRNH5K")
-                    local label = btn:FindFirstChild("Label")
-                    if label then
-                        local oldText = label.Text
-                        label.Text = "Copied!"
-                        task.delay(1.5, function()
-                            label.Text = oldText
-                        end)
-                    end
-                end
-            }
-        }
+    local statsParagraph = aboutTab:AddParagraph("Useless Hub Community", "Members: Loading... | Online: Loading...", {
+        Image = "https://i.ibb.co/67yYjfG6/Group-2.png"
     })
+    
+    local copyBtn
+    copyBtn = aboutTab:AddButton("Copy Discord Link", function()
+        Utility.SetClipboard("https://discord.gg/24fsRNH5K")
+        copyBtn:Set("Copied!")
+        task.delay(1.5, function()
+            copyBtn:Set("Copy Discord Link")
+        end)
+    end)
     
     -- Fetch Discord invite counts asynchronously
     task.spawn(function()
