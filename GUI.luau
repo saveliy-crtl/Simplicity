@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 21:18:08
+	Generated at: 2026-07-06 21:30:07
 	Simple, Beautiful, Proper
 ]=]
 
@@ -480,7 +480,7 @@ function Button.new(text, parent, callback, icon, window)
     
     self.Frame.MouseButton1Down:Connect(function()
         if self.Window and self.Window.ActiveDialogue then return end
-        Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Accent }, 0.05)
+        Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.05)
     end)
     
     self.Frame.MouseButton1Up:Connect(function()
@@ -3179,7 +3179,7 @@ function Window:GetConfigs()
 end
 
 function Window:AddConfigTab()
-    local configTab = self:AddTab("Settings")
+    local configTab = self:AddTab("Settings", "settings")
     configTab:AddSection("Config Management")
     
     local configName = "default"
