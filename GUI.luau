@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-06 18:34:33
+	Generated at: 2026-07-06 18:45:40
 	Simple, Beautiful, Proper
 ]=]
 
@@ -625,7 +625,8 @@ function Colorpicker:OpenDialogue()
         TextColor3 = Theme.TextSecondary,
         TextSize = 12,
         Font = Theme.FontMedium,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 205
     })
     
     local hueTrack = Utility.Create("Frame", {
@@ -633,7 +634,8 @@ function Colorpicker:OpenDialogue()
         Parent = dialogue.Content,
         Size = UDim2.new(1, -110, 0, 8),
         Position = UDim2.new(0, 95, 0, 21),
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 205
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIGradient", {
@@ -655,7 +657,8 @@ function Colorpicker:OpenDialogue()
         Size = UDim2.new(0, 14, 0, 14),
         Position = UDim2.new(self.H, -7, 0.5, -7),
         BackgroundColor3 = Theme.TextPrimary,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 206
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
@@ -672,7 +675,8 @@ function Colorpicker:OpenDialogue()
         TextColor3 = Theme.TextSecondary,
         TextSize = 12,
         Font = Theme.FontMedium,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 205
     })
     
     local satTrack = Utility.Create("Frame", {
@@ -680,7 +684,8 @@ function Colorpicker:OpenDialogue()
         Parent = dialogue.Content,
         Size = UDim2.new(1, -110, 0, 8),
         Position = UDim2.new(0, 95, 0, 56),
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 205
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIGradient", {
@@ -696,7 +701,8 @@ function Colorpicker:OpenDialogue()
         Size = UDim2.new(0, 14, 0, 14),
         Position = UDim2.new(self.S, -7, 0.5, -7),
         BackgroundColor3 = Theme.TextPrimary,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 206
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
@@ -713,7 +719,8 @@ function Colorpicker:OpenDialogue()
         TextColor3 = Theme.TextSecondary,
         TextSize = 12,
         Font = Theme.FontMedium,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 205
     })
     
     local valTrack = Utility.Create("Frame", {
@@ -721,7 +728,8 @@ function Colorpicker:OpenDialogue()
         Parent = dialogue.Content,
         Size = UDim2.new(1, -110, 0, 8),
         Position = UDim2.new(0, 95, 0, 91),
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 205
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIGradient", {
@@ -737,7 +745,8 @@ function Colorpicker:OpenDialogue()
         Size = UDim2.new(0, 14, 0, 14),
         Position = UDim2.new(self.V, -7, 0.5, -7),
         BackgroundColor3 = Theme.TextPrimary,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 206
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIStroke", { Color = Theme.Background, Thickness = 1.5 })
@@ -750,7 +759,8 @@ function Colorpicker:OpenDialogue()
         Size = UDim2.new(1, -30, 0, 8),
         Position = UDim2.new(0, 15, 0, 122),
         BackgroundColor3 = self.Value,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 205
     }, {
         Utility.Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
         Utility.Create("UIStroke", { Color = Theme.Border, Thickness = 1 })
@@ -940,7 +950,6 @@ end
 -- MODULE: components/Dialogue
 modules["components/Dialogue"] = function()local Theme = require("theme")
 local Utility = require("utility")
-local Lucide = require("packages/lucide-roblox")
 
 local Dialogue = {}
 Dialogue.__index = Dialogue
@@ -949,21 +958,13 @@ function Dialogue.new(title, window, size)
     local self = setmetatable({}, Dialogue)
     
     self.Window = window
-    self.Size = size or UDim2.new(0, 240, 0, 200)
+    self.Size = size or UDim2.new(0, 240, 0, 160)
     self.Title = title or "Dialogue"
     
-    local scale = self.Window.UIScale.Scale
-    
-    -- Absolute Screen center of the Window
-    local containerPos = self.Window.Container.AbsolutePosition
-    local containerSize = self.Window.Container.AbsoluteSize
-    local centerX = containerPos.X + (containerSize.X / 2)
-    local centerY = containerPos.Y + (containerSize.Y / 2)
-    
-    -- Full Screen Blackout Backdrop parented to self.Window.ScreenGui
+    -- Dialogue Backdrop parented to self.Window.Container (blackout covers ONLY the window!)
     self.Backdrop = Utility.Create("TextButton", {
         Name = "DialogueBackdrop",
-        Parent = self.Window.ScreenGui,
+        Parent = self.Window.Container,
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
@@ -971,31 +972,28 @@ function Dialogue.new(title, window, size)
         Text = "",
         ZIndex = 200,
         Active = true
+    }, {
+        -- Rounded corners matching the main window container shape
+        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius })
     })
     
     self.Backdrop.MouseButton1Click:Connect(function()
         self:Close()
     end)
     
-    -- Dialogue Body Container (handles scaling, positioning, shadow, no clipping)
+    -- Dialogue Body Container (handles shadow and centering, no clipping)
     self.FrameContainer = Utility.Create("Frame", {
         Name = "DialogueFrameContainer",
         Parent = self.Backdrop,
         Size = self.Size,
-        Position = UDim2.new(0, centerX, 0, centerY),
+        Position = UDim2.new(0.5, 0, 0.5, 0), -- Centered inside the blackout backdrop
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         ZIndex = 201,
         ClipsDescendants = false
-    }, {
-        Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
-        Utility.Create("UIScale", {
-            Name = "UIScale",
-            Scale = scale
-        })
     })
     
-    -- Add shadow using native UIShadow API
+    -- Add native drop shadow using UIShadow API
     Utility.AddShadow(self.FrameContainer, {
         BlurRadius = UDim.new(0, 20),
         Transparency = 0.5
@@ -1017,72 +1015,17 @@ function Dialogue.new(title, window, size)
             Thickness = 1,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         }),
-        -- Header Bar
-        Utility.Create("Frame", {
-            Name = "Header",
-            Size = UDim2.new(1, 0, 0, 32),
-            BackgroundColor3 = Theme.Background,
-            BorderSizePixel = 0
-        }, {
-            Utility.Create("TextLabel", {
-                Name = "Title",
-                Size = UDim2.new(1, -40, 1, 0),
-                Position = UDim2.new(0, 12, 0, 0),
-                BackgroundTransparency = 1,
-                Text = self.Title,
-                TextColor3 = Theme.TextPrimary,
-                TextSize = 13,
-                Font = Theme.FontSemibold,
-                TextXAlignment = Enum.TextXAlignment.Left
-            }),
-            -- Close Button
-            Utility.Create("TextButton", {
-                Name = "Close",
-                Size = UDim2.new(0, 24, 0, 24),
-                Position = UDim2.new(1, -28, 0.5, -12),
-                BackgroundTransparency = 1,
-                Text = ""
-            }, {
-                Utility.Create("ImageLabel", {
-                    Name = "Icon",
-                    Size = UDim2.new(0, 12, 0, 12),
-                    Position = UDim2.new(0.5, -6, 0.5, -6),
-                    BackgroundTransparency = 1,
-                    Image = Lucide.GetAsset("x", 48).Url,
-                    ImageRectSize = Lucide.GetAsset("x", 48).ImageRectSize,
-                    ImageRectOffset = Lucide.GetAsset("x", 48).ImageRectOffset,
-                    ImageColor3 = Theme.TextSecondary
-                })
-            })
-        }),
-        -- Content Area
+        -- Content Area (covers 100% of the frame since dialogue has no header!)
         Utility.Create("Frame", {
             Name = "Content",
-            Size = UDim2.new(1, 0, 1, -32),
-            Position = UDim2.new(0, 0, 0, 32),
-            BackgroundTransparency = 1
+            Size = UDim2.new(1, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            ZIndex = 203
         })
     })
     
-    self.Header = self.Frame:FindFirstChild("Header")
     self.Content = self.Frame:FindFirstChild("Content")
-    self.CloseBtn = self.Header:FindFirstChild("Close")
-    
-    -- Close button logic
-    self.CloseBtn.MouseButton1Click:Connect(function()
-        self:Close()
-    end)
-    
-    -- Hover effect on Close
-    local closeIcon = self.CloseBtn:FindFirstChild("Icon")
-    self.CloseBtn.MouseEnter:Connect(function()
-        Utility.Tween(closeIcon, { ImageColor3 = Theme.Failure }, 0.15)
-    end)
-    self.CloseBtn.MouseLeave:Connect(function()
-        Utility.Tween(closeIcon, { ImageColor3 = Theme.TextSecondary }, 0.15)
-    end)
-    
-    -- Non-draggable as requested
     
     -- Opening Animations (Fade dim & Zoom pop)
     Utility.Tween(self.Backdrop, { BackgroundTransparency = 0.65 }, 0.2)
@@ -2572,7 +2515,8 @@ function Window.new(title, configFolder)
     self.ScreenGui = Utility.Create("ScreenGui", {
         Name = self.Title .. "_Gui",
         Parent = Utility.GetCoreGui(),
-        ResetOnSpawn = false
+        ResetOnSpawn = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
     
     -- Centered pivot container for scaling & positioning (with UICorner so shadow is rounded)
