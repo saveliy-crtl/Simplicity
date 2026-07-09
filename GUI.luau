@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 02:05:52
+	Generated at: 2026-07-09 12:28:00
 	Simple, Beautiful, Proper
 ]=]
 
@@ -868,6 +868,17 @@ function Colorpicker.new(text, parent, options, callback, window)
     
     Utility.AddClickEffect(self.PreviewBtn)
     
+    -- Find parent ScrollingFrame to prevent mobile scroll hijacking
+    self.ParentScrollingFrame = nil
+    local current = parent
+    while current do
+        if current:IsA("ScrollingFrame") then
+            self.ParentScrollingFrame = current
+            break
+        end
+        current = current.Parent
+    end
+
     -- Register Flag (Store as RGB array to allow JSON serialization)
     if self.Flag and self.Window then
         self.Window.Flags = self.Window.Flags or {}
@@ -1150,6 +1161,9 @@ function Colorpicker:OpenDialogue()
     local connBeganHue = hueTrack.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.DraggingHue = true
+            if self.ParentScrollingFrame then
+                self.ParentScrollingFrame.ScrollingEnabled = false
+            end
             updateHue(input)
         end
     end)
@@ -1157,6 +1171,9 @@ function Colorpicker:OpenDialogue()
     local connBeganSat = satTrack.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.DraggingSat = true
+            if self.ParentScrollingFrame then
+                self.ParentScrollingFrame.ScrollingEnabled = false
+            end
             updateSat(input)
         end
     end)
@@ -1164,6 +1181,9 @@ function Colorpicker:OpenDialogue()
     local connBeganVal = valTrack.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.DraggingVal = true
+            if self.ParentScrollingFrame then
+                self.ParentScrollingFrame.ScrollingEnabled = false
+            end
             updateVal(input)
         end
     end)
@@ -1182,14 +1202,22 @@ function Colorpicker:OpenDialogue()
     
     local connEnded = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            self.DraggingHue = false
-            self.DraggingSat = false
-            self.DraggingVal = false
+            if self.DraggingHue or self.DraggingSat or self.DraggingVal then
+                self.DraggingHue = false
+                self.DraggingSat = false
+                self.DraggingVal = false
+                if self.ParentScrollingFrame then
+                    self.ParentScrollingFrame.ScrollingEnabled = true
+                end
+            end
         end
     end)
     
     -- Cleanup on close
     dialogue.Backdrop.Destroying:Connect(function()
+        if self.ParentScrollingFrame then
+            self.ParentScrollingFrame.ScrollingEnabled = true
+        end
         connBeganHue:Disconnect()
         connBeganSat:Disconnect()
         connBeganVal:Disconnect()
@@ -2153,17 +2181,16 @@ function Keybind:StartBinding()
         if input.UserInputType == Enum.UserInputType.Keyboard then
             if not BlacklistedKeys[key] then
                 connection:Disconnect()
-                self.Binding = false
                 self:Set(key)
+                self.Binding = false
                 
                 -- Trigger analytics
                 local Analytics = require("analytics/manager")
                 Analytics:Send("Keybind Updated", string.format("Rebound keybind **%s** to `%s`", self.Text, tostring(key.Name)))
             elseif key == Enum.KeyCode.Escape then
                 connection:Disconnect()
-                self.Binding = false
-                -- Revert to original
                 self:Set(self.Value)
+                self.Binding = false
             end
         end
     end)
@@ -2196,16 +2223,20 @@ function Keybind:Set(keyCode, force)
         self.Window.Flags[self.Flag] = keyCode.Name
     end
     
-    -- Setup new Key listener
-    self:BindKey(keyCode)
-    
-    -- Fire Callback
-    task.spawn(function()
-        local success, err = pcall(self.Callback, keyCode)
-        if not success then
-            warn("Error in keybind callback: " .. tostring(err))
-        end
+    -- Setup new Key listener (deferred to next frame to prevent race condition on same frame input dispatch)
+    task.defer(function()
+        self:BindKey(keyCode)
     end)
+    
+    -- Fire Callback (only if not currently binding)
+    if not self.Binding then
+        task.spawn(function()
+            local success, err = pcall(self.Callback, keyCode)
+            if not success then
+                warn("Error in keybind callback: " .. tostring(err))
+            end
+        end)
+    end
 end
 
 function Keybind:BindKey(keyCode)
@@ -2640,6 +2671,17 @@ function Slider.new(text, parent, options, callback, window)
         Utility.Tween(self.Frame, { BackgroundColor3 = Theme.Card }, 0.15)
     end)
     
+    -- Find parent ScrollingFrame to prevent mobile scroll hijacking
+    local parentScrollingFrame = nil
+    local current = parent
+    while current do
+        if current:IsA("ScrollingFrame") then
+            parentScrollingFrame = current
+            break
+        end
+        current = current.Parent
+    end
+
     -- Dragging Logic
     local function updateValue(input)
         local absoluteWidth = self.Track.AbsoluteSize.X
@@ -2659,6 +2701,9 @@ function Slider.new(text, parent, options, callback, window)
         if self.Window and self.Window.ActiveDialogue then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             self.Dragging = true
+            if parentScrollingFrame then
+                parentScrollingFrame.ScrollingEnabled = false
+            end
             updateValue(input)
             TweenService:Create(self.Knob, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(1, -7, 0.5, -7) }):Play()
         end
@@ -2673,6 +2718,9 @@ function Slider.new(text, parent, options, callback, window)
     UserInputService.InputEnded:Connect(function(input)
         if self.Dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             self.Dragging = false
+            if parentScrollingFrame then
+                parentScrollingFrame.ScrollingEnabled = true
+            end
             TweenService:Create(self.Knob, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(1, -6, 0.5, -6) }):Play()
             
             -- Trigger analytics
@@ -3302,15 +3350,15 @@ function Window.new(title, configFolder, options)
         Transparency = 0.5
     })
     
-    -- Main Frame (styled window)
-    self.MainFrame = Utility.Create("Frame", {
+    -- Main Frame (styled window using CanvasGroup for seamless fading)
+    self.MainFrame = Utility.Create("CanvasGroup", {
         Name = "MainFrame",
         Parent = self.Container,
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Theme.Background,
-        ClipsDescendants = true,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        GroupTransparency = 1
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
@@ -3324,13 +3372,13 @@ function Window.new(title, configFolder, options)
     self.UIScale = Utility.Create("UIScale", {
         Name = "UIScale",
         Parent = self.Container,
-        Scale = 0.94
+        Scale = 0.8
     })
     
     -- Value holder for animating the appear scale cleanly
     self.AppearScaleValue = Instance.new("NumberValue")
     self.AppearScaleValue.Name = "AppearScaleValue"
-    self.AppearScaleValue.Value = 0.94
+    self.AppearScaleValue.Value = 0.8
     self.AppearScaleValue.Parent = self.Container
     
     self.ResponsiveScale = 1
@@ -3587,10 +3635,11 @@ function Window.new(title, configFolder, options)
         end
     end)
     
-    -- Animate Launch (Appear Scale)
+    -- Animate Launch (Appear Scale & Fade)
     task.spawn(function()
         task.wait(0.02)
-        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
+        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
+        TweenService:Create(self.MainFrame, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { GroupTransparency = 0 }):Play()
     end)
 
     return self
@@ -3641,9 +3690,11 @@ function Window:ToggleVisibility()
     if self.Closed then return end
     
     if self.MainFrame.Visible then
-        local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.94 })
-        tween:Play()
-        self.ToggleConnection = tween.Completed:Connect(function()
+        local scaleTween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.8 })
+        local fadeTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { GroupTransparency = 1 })
+        scaleTween:Play()
+        fadeTween:Play()
+        self.ToggleConnection = scaleTween.Completed:Connect(function()
             self.MainFrame.Visible = false
             if self.ToggleConnection then
                 self.ToggleConnection:Disconnect()
@@ -3655,9 +3706,11 @@ function Window:ToggleVisibility()
             self.ToggleConnection:Disconnect()
             self.ToggleConnection = nil
         end
-        self.AppearScaleValue.Value = 0.94
+        self.AppearScaleValue.Value = 0.8
+        self.MainFrame.GroupTransparency = 1
         self.MainFrame.Visible = true
-        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
+        TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.24, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Value = 1.0 }):Play()
+        TweenService:Create(self.MainFrame, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { GroupTransparency = 0 }):Play()
     end
 end
 
@@ -3672,9 +3725,11 @@ function Window:Close()
         self.ViewportConnection:Disconnect()
     end
     
-    local tween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.94 })
-    tween:Play()
-    tween.Completed:Wait()
+    local scaleTween = TweenService:Create(self.AppearScaleValue, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Value = 0.8 })
+    local fadeTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { GroupTransparency = 1 })
+    scaleTween:Play()
+    fadeTween:Play()
+    scaleTween.Completed:Wait()
     
     self.ScreenGui:Destroy()
 end
