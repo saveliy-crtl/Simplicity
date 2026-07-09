@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 14:40:09
+	Generated at: 2026-07-09 14:45:46
 	Simple, Beautiful, Proper
 ]=]
 
@@ -2944,6 +2944,14 @@ function Slider.new(text, parent, options, callback, window)
         end
     end)
     
+    Theme.Register(self.Frame, { BackgroundColor3 = "Card" })
+    Theme.Register(stroke, { Color = "Border" })
+    Theme.Register(self.Frame:FindFirstChild("Label"), { TextColor3 = "TextSecondary" })
+    Theme.Register(self.ValueLabel, { TextColor3 = "TextPrimary" })
+    Theme.Register(self.Track, { BackgroundColor3 = "BorderMuted" })
+    Theme.Register(self.Fill, { BackgroundColor3 = "Accent" })
+    Theme.Register(self.Knob, { BackgroundColor3 = "TextPrimary" })
+    
     -- Register Flag
     if self.Flag and self.Window then
         self.Window.Flags = self.Window.Flags or {}
@@ -3480,7 +3488,7 @@ function Toggle.new(text, parent, options, callback, window)
     Theme.Register(stroke, { Color = "Border" })
     Theme.Register(self.Knob, { BackgroundColor3 = "TextPrimary" })
     Theme.Register(self.Track, function()
-        self.Track.BackgroundColor3 = self.Value and Theme.Success or Theme.Border
+        self.Track.BackgroundColor3 = self.Value and Theme.Accent or Theme.Border
     end)
     Theme.Register(self.Frame:FindFirstChild("Label"), function()
         local lbl = self.Frame:FindFirstChild("Label")
@@ -3515,7 +3523,7 @@ function Toggle:Set(state)
     
     -- Visual update (tween knob and background track color)
     local targetPos = state and UDim2.new(0, 23, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-    local targetColor = state and Theme.Success or Theme.Border
+    local targetColor = state and Theme.Accent or Theme.Border
     
     Utility.Tween(self.Knob, { Position = targetPos }, 0.15)
     Utility.Tween(self.Track, { BackgroundColor3 = targetColor }, 0.15)
