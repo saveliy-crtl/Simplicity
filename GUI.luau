@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 13:04:19
+	Generated at: 2026-07-09 13:10:21
 	Simple, Beautiful, Proper
 ]=]
 
@@ -1779,7 +1779,8 @@ function Dropdown:OpenPopup()
         AnchorPoint = Vector2.new(0.5, 0), -- Scaled from center-top
         BackgroundTransparency = 1,
         ZIndex = 100,
-        ClipsDescendants = false
+        ClipsDescendants = false,
+        Active = true
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIScale", {
@@ -1807,7 +1808,8 @@ function Dropdown:OpenPopup()
         BackgroundColor3 = Theme.Header,
         BorderSizePixel = 0,
         ZIndex = 101,
-        GroupTransparency = 1
+        GroupTransparency = 1,
+        Active = true
     }, {
         Utility.Create("UICorner", { CornerRadius = Theme.CornerRadius }),
         Utility.Create("UIStroke", {
@@ -3372,7 +3374,17 @@ function Window.new(title, configFolder, options)
     self.CurrentTab = nil
     self.Minimized = false
     self.Closed = false
-    self.Flags = {}
+    self.Flags = setmetatable({}, {
+        __newindex = function(tbl, flag, val)
+            local currentVal = tbl[flag]
+            rawset(tbl, flag, val)
+            if currentVal ~= val then
+                if self.AutoSave and self.CurrentConfigName and self.CurrentConfigName ~= "" and self.CurrentConfigName ~= "Nothing here yet..." then
+                    self:SaveConfigDebounced(self.CurrentConfigName)
+                end
+            end
+        end
+    })
     self.FlagElements = {}
     
     -- Main ScreenGui
@@ -3686,6 +3698,17 @@ function Window.new(title, configFolder, options)
         end
     end)
     
+    -- Load Hub settings (Auto-Save, Auto-Load, Last Config)
+    self:LoadHubSettings()
+    
+    -- Auto Load Config if enabled
+    if self.AutoLoad and self.CurrentConfigName and self.CurrentConfigName ~= "" then
+        task.spawn(function()
+            task.wait(0.2) -- Wait for developer script to populate tabs/components
+            self:LoadConfig(self.CurrentConfigName)
+        end)
+    end
+    
     -- Animate Launch (Appear Scale & Fade)
     task.spawn(function()
         task.wait(0.02)
@@ -3929,12 +3952,56 @@ function Window:SelectTab(name, instant)
 end
 
 -- Configuration System Methods
-function Window:SaveConfig(name)
+function Window:LoadHubSettings()
+    self.AutoSave = false
+    self.AutoLoad = false
+    self.CurrentConfigName = "default"
+    
+    local settings = Utility.ReadConfig(self.ConfigFolder, "hub_settings")
+    if settings then
+        if settings.AutoSave ~= nil then
+            self.AutoSave = settings.AutoSave
+        end
+        if settings.AutoLoad ~= nil then
+            self.AutoLoad = settings.AutoLoad
+        end
+        if settings.LastConfig ~= nil then
+            self.CurrentConfigName = settings.LastConfig
+        end
+    end
+end
+
+function Window:SaveHubSettings()
+    Utility.WriteConfig(self.ConfigFolder, "hub_settings", {
+        AutoSave = self.AutoSave,
+        AutoLoad = self.AutoLoad,
+        LastConfig = self.CurrentConfigName
+    })
+end
+
+function Window:SaveConfigDebounced(name)
+    self.SaveDebounces = self.SaveDebounces or {}
+    self.SaveDebounces[name] = os.time()
+    local myTime = self.SaveDebounces[name]
+    
+    task.delay(1.0, function()
+        if self.SaveDebounces[name] == myTime then
+            self:SaveConfig(name, true)
+        end
+    end)
+end
+
+function Window:SaveConfig(name, silent)
+    self.CurrentConfigName = name
+    self:SaveHubSettings()
+    
     local success = Utility.WriteConfig(self.ConfigFolder, name, self.Flags)
     if success then
         local Analytics = require("analytics/manager")
         Analytics:Send("Config Management", string.format("Saved configuration: `%s`", name))
-        self:Notification("Saved configuration: " .. name, 3, "check_circle", Theme.Accent)
+        if not silent then
+            self:Notification("Saved configuration: " .. name, 3, "check_circle", Theme.Accent)
+        end
     end
     return success
 end
@@ -3942,6 +4009,9 @@ end
 function Window:LoadConfig(name)
     local data = Utility.ReadConfig(self.ConfigFolder, name)
     if data then
+        self.CurrentConfigName = name
+        self:SaveHubSettings()
+        
         for flag, val in pairs(data) do
             if self.FlagElements[flag] then
                 pcall(function()
@@ -3977,12 +4047,14 @@ function Window:AddConfigTab()
     local configTab = self:AddTab("Settings", "settings")
     configTab:AddSection("Config Management")
     
-    local configName = "default"
+    local configName = self.CurrentConfigName or "default"
     
-    local configInput = configTab:AddTextBox("Config Name", "default", {
-        default = "default"
+    local configInput = configTab:AddTextBox("Config Name", configName, {
+        default = configName
     }, function(val)
         configName = val
+        self.CurrentConfigName = val
+        self:SaveHubSettings()
     end)
     
     local configDropdown
@@ -4000,11 +4072,13 @@ function Window:AddConfigTab()
     
     configDropdown = configTab:AddDropdown("Saved Configs", {
         list = configList,
-        default = ""
+        default = configName
     }, function(selected)
         if selected and selected ~= "" and selected ~= "Nothing here yet..." then
             configName = selected
+            self.CurrentConfigName = selected
             configInput:Set(selected)
+            self:SaveHubSettings()
         end
     end)
     
@@ -4027,6 +4101,22 @@ function Window:AddConfigTab()
     
     configTab:AddButton("Refresh Config List", function()
         refreshConfigs()
+    end)
+    
+    configTab:AddSection("Automation Settings")
+    
+    configTab:AddToggle("Auto-Save Config", {
+        default = self.AutoSave
+    }, function(state)
+        self.AutoSave = state
+        self:SaveHubSettings()
+    end)
+    
+    configTab:AddToggle("Auto-Load Config", {
+        default = self.AutoLoad
+    }, function(state)
+        self.AutoLoad = state
+        self:SaveHubSettings()
     end)
     
     -- Load initial files list
