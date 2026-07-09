@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 13:10:21
+	Generated at: 2026-07-09 13:14:52
 	Simple, Beautiful, Proper
 ]=]
 
@@ -29,8 +29,7 @@ pcall(function()
 end)
 
 local Theme = {
-    
-    -- Core colors (Deep Charcoal / Royal Purple Dark theme)
+    -- Core colors (Deep Charcoal / Emerald Default theme)
     Background = Color3.fromRGB(18, 18, 22),        -- Deep Charcoal Black
     Sidebar = Color3.fromRGB(13, 13, 16),          -- Sleek darker sidebar
     Header = Color3.fromRGB(24, 24, 28),           -- Elevated Header Panel
@@ -70,6 +69,153 @@ local Theme = {
     TweenEasing = Enum.EasingStyle.Quad,
     TweenDirection = Enum.EasingDirection.Out
 }
+
+Theme.Registry = setmetatable({}, { __mode = "k" })
+Theme.ActiveWindow = nil
+
+Theme.Presets = {
+    ["Emerald"] = {
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(13, 13, 16),
+        Header = Color3.fromRGB(24, 24, 28),
+        Card = Color3.fromRGB(28, 28, 34),
+        CardHover = Color3.fromRGB(36, 36, 44),
+        Accent = Color3.fromRGB(16, 185, 129),
+        AccentGradientStart = Color3.fromRGB(16, 185, 129),
+        AccentGradientEnd = Color3.fromRGB(52, 211, 153),
+        Border = Color3.fromRGB(40, 40, 48),
+        BorderActive = Color3.fromRGB(16, 185, 129),
+        BorderMuted = Color3.fromRGB(24, 24, 28)
+    },
+    ["Amethyst"] = {
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(13, 13, 16),
+        Header = Color3.fromRGB(24, 24, 28),
+        Card = Color3.fromRGB(28, 28, 34),
+        CardHover = Color3.fromRGB(36, 36, 44),
+        Accent = Color3.fromRGB(139, 92, 246), -- Purple
+        AccentGradientStart = Color3.fromRGB(139, 92, 246),
+        AccentGradientEnd = Color3.fromRGB(196, 181, 253),
+        Border = Color3.fromRGB(40, 40, 48),
+        BorderActive = Color3.fromRGB(139, 92, 246),
+        BorderMuted = Color3.fromRGB(24, 24, 28)
+    },
+    ["Ruby"] = {
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(13, 13, 16),
+        Header = Color3.fromRGB(24, 24, 28),
+        Card = Color3.fromRGB(28, 28, 34),
+        CardHover = Color3.fromRGB(36, 36, 44),
+        Accent = Color3.fromRGB(239, 68, 68), -- Crimson Red
+        AccentGradientStart = Color3.fromRGB(239, 68, 68),
+        AccentGradientEnd = Color3.fromRGB(252, 165, 165),
+        Border = Color3.fromRGB(40, 40, 48),
+        BorderActive = Color3.fromRGB(239, 68, 68),
+        BorderMuted = Color3.fromRGB(24, 24, 28)
+    },
+    ["Sapphire"] = {
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(13, 13, 16),
+        Header = Color3.fromRGB(24, 24, 28),
+        Card = Color3.fromRGB(28, 28, 34),
+        CardHover = Color3.fromRGB(36, 36, 44),
+        Accent = Color3.fromRGB(59, 130, 246), -- Blue
+        AccentGradientStart = Color3.fromRGB(59, 130, 246),
+        AccentGradientEnd = Color3.fromRGB(147, 197, 253),
+        Border = Color3.fromRGB(40, 40, 48),
+        BorderActive = Color3.fromRGB(59, 130, 246),
+        BorderMuted = Color3.fromRGB(24, 24, 28)
+    },
+    ["Amber"] = {
+        Background = Color3.fromRGB(18, 18, 22),
+        Sidebar = Color3.fromRGB(13, 13, 16),
+        Header = Color3.fromRGB(24, 24, 28),
+        Card = Color3.fromRGB(28, 28, 34),
+        CardHover = Color3.fromRGB(36, 36, 44),
+        Accent = Color3.fromRGB(245, 158, 11), -- Orange
+        AccentGradientStart = Color3.fromRGB(245, 158, 11),
+        AccentGradientEnd = Color3.fromRGB(253, 230, 138),
+        Border = Color3.fromRGB(40, 40, 48),
+        BorderActive = Color3.fromRGB(245, 158, 11),
+        BorderMuted = Color3.fromRGB(24, 24, 28)
+    },
+    ["Midnight"] = {
+        Background = Color3.fromRGB(9, 9, 11), -- Extra dark
+        Sidebar = Color3.fromRGB(4, 4, 5),
+        Header = Color3.fromRGB(15, 15, 18),
+        Card = Color3.fromRGB(20, 20, 25),
+        CardHover = Color3.fromRGB(28, 28, 35),
+        Accent = Color3.fromRGB(34, 197, 94), -- Lime Green
+        AccentGradientStart = Color3.fromRGB(34, 197, 94),
+        AccentGradientEnd = Color3.fromRGB(134, 239, 172),
+        Border = Color3.fromRGB(24, 24, 30),
+        BorderActive = Color3.fromRGB(34, 197, 94),
+        BorderMuted = Color3.fromRGB(15, 15, 18)
+    },
+    ["Sakura"] = {
+        Background = Color3.fromRGB(26, 20, 26), -- Dark Plum
+        Sidebar = Color3.fromRGB(18, 14, 18),
+        Header = Color3.fromRGB(34, 26, 34),
+        Card = Color3.fromRGB(40, 30, 40),
+        CardHover = Color3.fromRGB(50, 38, 50),
+        Accent = Color3.fromRGB(244, 114, 182), -- Rose Pink
+        AccentGradientStart = Color3.fromRGB(244, 114, 182),
+        AccentGradientEnd = Color3.fromRGB(249, 168, 212),
+        Border = Color3.fromRGB(60, 44, 60),
+        BorderActive = Color3.fromRGB(244, 114, 182),
+        BorderMuted = Color3.fromRGB(34, 26, 34)
+    }
+}
+
+function Theme.Register(instance, mapping)
+    Theme.Registry[instance] = mapping
+    
+    -- Apply initial mapping values
+    for prop, themeKey in pairs(mapping) do
+        pcall(function()
+            if themeKey == "AccentGradient" then
+                -- Handle UIGradient update special case
+                instance.Color = ColorSequence.new(Theme.AccentGradientStart, Theme.AccentGradientEnd)
+            else
+                instance[prop] = Theme[themeKey]
+            end
+        end)
+    end
+end
+
+function Theme.Update()
+    for instance, data in pairs(Theme.Registry) do
+        pcall(function()
+            if type(data) == "function" then
+                data(Theme)
+            else
+                for prop, themeKey in pairs(data) do
+                    if themeKey == "AccentGradient" then
+                        instance.Color = ColorSequence.new(Theme.AccentGradientStart, Theme.AccentGradientEnd)
+                    else
+                        instance[prop] = Theme[themeKey]
+                    end
+                end
+            end
+        end)
+    end
+end
+
+function Theme.ApplyTheme(presetName)
+    local preset = Theme.Presets[presetName]
+    if not preset then return end
+    
+    for key, val in pairs(preset) do
+        Theme[key] = val
+    end
+    
+    if Theme.ActiveWindow then
+        Theme.ActiveWindow.CurrentTheme = presetName
+        Theme.ActiveWindow:SaveHubSettings()
+    end
+    
+    Theme.Update()
+end
 
 return Theme
 end
@@ -785,6 +931,17 @@ function Button.new(text, parent, callback, icon, window)
     end)
     
     Utility.AddClickEffect(self.Frame)
+    
+    Theme.Register(self.Frame, { BackgroundColor3 = "Card" })
+    Theme.Register(stroke, { Color = "Border" })
+    local lbl = self.Frame:FindFirstChild("Label") or (self.Frame:FindFirstChild("Content") and self.Frame.Content:FindFirstChild("Label"))
+    if lbl then
+        Theme.Register(lbl, { TextColor3 = "TextPrimary" })
+    end
+    local ico = self.Frame:FindFirstChild("Content") and self.Frame.Content:FindFirstChild("Icon")
+    if ico then
+        Theme.Register(ico, { ImageColor3 = "TextPrimary" })
+    end
     
     return self
 end
@@ -2354,6 +2511,7 @@ function Label.new(text, parent)
     })
     
     self.TextLabel = self.Frame:FindFirstChild("TextLabel")
+    Theme.Register(self.TextLabel, { TextColor3 = "TextSecondary" })
     
     return self
 end
@@ -2385,6 +2543,7 @@ function Label.newSection(text, parent)
     })
     
     self.TextLabel = self.Frame:FindFirstChild("TextLabel")
+    Theme.Register(self.TextLabel, { TextColor3 = "TextPrimary" })
     
     return self
 end
@@ -2960,6 +3119,24 @@ function Tab.new(name, window, icon)
     
     Utility.AddClickEffect(self.Button)
     
+    Theme.Register(self.Page, { ScrollBarImageColor3 = "Border" })
+    Theme.Register(self.Button, function()
+        if self.Active then
+            self.Button.BackgroundColor3 = Theme.Card
+        end
+    end)
+    Theme.Register(self.Button:FindFirstChild("Label"), function()
+        local lbl = self.Button:FindFirstChild("Label")
+        if lbl then
+            lbl.TextColor3 = self.Active and Theme.TextPrimary or Theme.TextSecondary
+        end
+    end)
+    if self.Icon then
+        Theme.Register(self.Icon, function()
+            self.Icon.ImageColor3 = self.Active and Theme.TextPrimary or Theme.TextSecondary
+        end)
+    end
+    
     return self
 end
 
@@ -3293,6 +3470,21 @@ function Toggle.new(text, parent, options, callback, window)
     
     Utility.AddClickEffect(self.Frame)
     
+    Theme.Register(self.Frame, function()
+        self.Frame.BackgroundColor3 = Theme.Card
+    end)
+    Theme.Register(stroke, { Color = "Border" })
+    Theme.Register(self.Knob, { BackgroundColor3 = "TextPrimary" })
+    Theme.Register(self.Track, function()
+        self.Track.BackgroundColor3 = self.Value and Theme.Success or Theme.Border
+    end)
+    Theme.Register(self.Frame:FindFirstChild("Label"), function()
+        local lbl = self.Frame:FindFirstChild("Label")
+        if lbl then
+            lbl.TextColor3 = self.Value and Theme.TextPrimary or Theme.TextSecondary
+        end
+    end)
+    
     -- Register Flag in Window (if flag option was provided)
     if self.Flag and self.Window then
         -- Add registration functions to the window if not already initialized
@@ -3353,6 +3545,7 @@ function Window.new(title, configFolder, options)
     self.Title = title or "Useless Hub"
     self.ConfigFolder = configFolder or "uselesshub_configs"
     Utility.ActiveWindow = self
+    Theme.ActiveWindow = self
     
     -- Handle webhook options
     local webhookUrl = nil
@@ -3430,6 +3623,9 @@ function Window.new(title, configFolder, options)
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         })
     })
+    
+    Theme.Register(self.MainFrame, { BackgroundColor3 = "Background" })
+    Theme.Register(self.MainFrame:FindFirstChildOfClass("UIStroke"), { Color = "Border" })
 
     -- Single UIScale Setup (on the Container for centered zoom)
     self.UIScale = Utility.Create("UIScale", {
@@ -3531,6 +3727,10 @@ function Window.new(title, configFolder, options)
     self.HeaderCorner = self.Header:FindFirstChild("Corner")
     self.HeaderDivider = self.Header:FindFirstChild("Divider")
     
+    Theme.Register(self.Header, { BackgroundColor3 = "Header" })
+    Theme.Register(self.Header:FindFirstChild("Title"), { TextColor3 = "TextPrimary" })
+    Theme.Register(self.HeaderDivider, { BackgroundColor3 = "Border" })
+    
     -- Close and Minimize Buttons
     local actionsContainer = self.Header:FindFirstChild("Actions")
     
@@ -3625,6 +3825,10 @@ function Window.new(title, configFolder, options)
             })
         })
     })
+    
+    Theme.Register(self.Sidebar, { BackgroundColor3 = "Sidebar" })
+    Theme.Register(self.Sidebar:FindFirstChild("Border"), { BackgroundColor3 = "Border" })
+    Theme.Register(self.Sidebar:FindFirstChild("TabContainer"), { ScrollBarImageColor3 = "Border" })
     
     -- Content Pages Container (Right)
     self.ContentContainer = Utility.Create("CanvasGroup", {
@@ -3956,6 +4160,7 @@ function Window:LoadHubSettings()
     self.AutoSave = false
     self.AutoLoad = false
     self.CurrentConfigName = "default"
+    self.CurrentTheme = "Emerald"
     
     local settings = Utility.ReadConfig(self.ConfigFolder, "hub_settings")
     if settings then
@@ -3968,6 +4173,11 @@ function Window:LoadHubSettings()
         if settings.LastConfig ~= nil then
             self.CurrentConfigName = settings.LastConfig
         end
+        if settings.Theme ~= nil then
+            self.CurrentTheme = settings.Theme
+            -- Apply stored theme preset
+            Theme.ApplyTheme(self.CurrentTheme)
+        end
     end
 end
 
@@ -3975,7 +4185,8 @@ function Window:SaveHubSettings()
     Utility.WriteConfig(self.ConfigFolder, "hub_settings", {
         AutoSave = self.AutoSave,
         AutoLoad = self.AutoLoad,
-        LastConfig = self.CurrentConfigName
+        LastConfig = self.CurrentConfigName,
+        Theme = self.CurrentTheme
     })
 end
 
@@ -4117,6 +4328,24 @@ function Window:AddConfigTab()
     }, function(state)
         self.AutoLoad = state
         self:SaveHubSettings()
+    end)
+    
+    configTab:AddSection("Theme Customization")
+    
+    local themesList = {}
+    for name, _ in pairs(Theme.Presets) do
+        table.insert(themesList, name)
+    end
+    table.sort(themesList)
+    
+    configTab:AddDropdown("Active Theme", {
+        list = themesList,
+        default = self.CurrentTheme or "Emerald"
+    }, function(selected)
+        if selected and selected ~= "" then
+            self.CurrentTheme = selected
+            Theme.ApplyTheme(selected)
+        end
     end)
     
     -- Load initial files list
