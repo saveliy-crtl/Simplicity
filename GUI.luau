@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 13:14:52
+	Generated at: 2026-07-09 14:40:09
 	Simple, Beautiful, Proper
 ]=]
 
@@ -171,15 +171,19 @@ function Theme.Register(instance, mapping)
     Theme.Registry[instance] = mapping
     
     -- Apply initial mapping values
-    for prop, themeKey in pairs(mapping) do
-        pcall(function()
-            if themeKey == "AccentGradient" then
-                -- Handle UIGradient update special case
-                instance.Color = ColorSequence.new(Theme.AccentGradientStart, Theme.AccentGradientEnd)
-            else
-                instance[prop] = Theme[themeKey]
-            end
-        end)
+    if type(mapping) == "function" then
+        pcall(mapping, Theme)
+    elseif type(mapping) == "table" then
+        for prop, themeKey in pairs(mapping) do
+            pcall(function()
+                if themeKey == "AccentGradient" then
+                    -- Handle UIGradient update special case
+                    instance.Color = ColorSequence.new(Theme.AccentGradientStart, Theme.AccentGradientEnd)
+                else
+                    instance[prop] = Theme[themeKey]
+                end
+            end)
+        end
     end
 end
 
