@@ -1,6 +1,6 @@
 --[=[
 	Roblox UI Library Bundle
-	Generated at: 2026-07-09 14:45:46
+	Generated at: 2026-07-09 14:47:02
 	Simple, Beautiful, Proper
 ]=]
 
@@ -164,6 +164,19 @@ Theme.Presets = {
         Border = Color3.fromRGB(60, 44, 60),
         BorderActive = Color3.fromRGB(244, 114, 182),
         BorderMuted = Color3.fromRGB(34, 26, 34)
+    },
+    ["Material"] = {
+        Background = Color3.fromRGB(18, 19, 24),          -- Surface (dark tint)
+        Sidebar = Color3.fromRGB(14, 15, 19),             -- Surface Container Low
+        Header = Color3.fromRGB(30, 31, 37),              -- Surface Container
+        Card = Color3.fromRGB(42, 43, 54),                -- Surface Container High
+        CardHover = Color3.fromRGB(54, 55, 68),           -- Surface Container Highest
+        Accent = Color3.fromRGB(208, 188, 255),           -- M3 Purple Primary
+        AccentGradientStart = Color3.fromRGB(208, 188, 255),
+        AccentGradientEnd = Color3.fromRGB(232, 221, 253), -- Primary Container Tint
+        Border = Color3.fromRGB(68, 70, 78),              -- Outline
+        BorderActive = Color3.fromRGB(208, 188, 255),      -- Active Primary
+        BorderMuted = Color3.fromRGB(30, 31, 37)
     }
 }
 
